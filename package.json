@@ -7,9 +7,10 @@
     "packages/*"
   ],
   "scripts": {
+    "test": "npm run test:unit && npm run test:integration && npm run test:protocol:package",
     "test:protocol:package": "node scripts/check-contracts-package.mjs",
-    "test:unit": "vitest run --config tests/config/vitest.unit.config.mjs",
-    "test:integration": "vitest run --config tests/config/vitest.integration.config.mjs"
+    "test:unit": "vitest run --config tests/config/vitest.unit.config.mjs tests/unit/canonicalize.test.js tests/unit/contracts.test.js tests/unit/error-codes.test.js tests/unit/schema-validation.test.js",
+    "test:integration": "vitest run --config tests/config/vitest.integration.config.mjs tests/integration/contracts-package.integration.test.js"
   },
   "engines": {
     "node": ">=20"
