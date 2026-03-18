@@ -4,6 +4,11 @@ Protocol definitions, schemas, templates, and compatibility docs for delegated e
 
 This repository is the protocol-side split from the original monorepo and contains the publishable `@delexec/contracts` package plus protocol truth-source docs and template assets.
 
+## AI Collaboration
+
+- `CLAUDE.md` defines the repository-specific development and validation rules.
+- `AGENTS.md` gives a minimal routing and ownership summary for AI coding agents.
+
 ## Repository Responsibility
 
 This repository owns the stable cross-repository protocol surface:
