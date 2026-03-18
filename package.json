@@ -1,0 +1,21 @@
+{
+  "name": "delegated-execution-protocol",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Protocol definitions, schemas, templates, and compatibility docs for delegated execution.",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "test:protocol:package": "node scripts/check-contracts-package.mjs",
+    "test:unit": "vitest run --config tests/config/vitest.unit.config.mjs",
+    "test:integration": "vitest run --config tests/config/vitest.integration.config.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "ajv": "^8.17.1",
+    "vitest": "^3.2.4"
+  }
+}
