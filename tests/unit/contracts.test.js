@@ -22,11 +22,11 @@ describe("@delexec/contracts", () => {
   it("canonicalizes only signable result fields", () => {
     expect(
       canonicalizeResultPackageForSignature({
-        message_type: "remote_subagent_result",
+        message_type: "remote_hotline_result",
         request_id: "req_1",
         result_version: "0.1.0",
-        seller_id: "seller_foxlab",
-        subagent_id: "foxlab.text.classifier.v1",
+        responder_id: "responder_foxlab",
+        hotline_id: "foxlab.text.classifier.v1",
         verification: { display_code: "CODE123" },
         status: "ok",
         output: { summary: "done" },
@@ -37,11 +37,11 @@ describe("@delexec/contracts", () => {
         extra_field: true
       })
     ).toEqual({
-      message_type: "remote_subagent_result",
+      message_type: "remote_hotline_result",
       request_id: "req_1",
       result_version: "0.1.0",
-      seller_id: "seller_foxlab",
-      subagent_id: "foxlab.text.classifier.v1",
+      responder_id: "responder_foxlab",
+      hotline_id: "foxlab.text.classifier.v1",
       verification: { display_code: "CODE123" },
       status: "ok",
       output: { summary: "done" },

@@ -15,7 +15,7 @@ const PROTOCOL_DOC_SOURCES = [
   "docs/current/spec/architecture.md",
   "docs/current/spec/defaults-v0.1.md",
   "docs/current/spec/platform-api-v0.1.md",
-  "docs/current/spec/remote-subagent-scope.md",
+  "docs/current/spec/remote-hotline-scope.md",
   "docs/current/guides/integration-playbook.md",
   "docs/current/guides/protocol-pre-split-boundary.md",
   "docs/current/guides/pre-split-naming-matrix.md",
@@ -57,24 +57,24 @@ function collectTemplateManifest() {
     .map((entry) => entry.name)
     .sort();
 
-  const subagentsRoot = path.join(TEMPLATES_SOURCE_DIR, "subagents");
-  const subagents = fs
-    .readdirSync(subagentsRoot, { withFileTypes: true })
+  const hotlinesRoot = path.join(TEMPLATES_SOURCE_DIR, "hotlines");
+  const hotlines = fs
+    .readdirSync(hotlinesRoot, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => {
-      const dirPath = path.join(subagentsRoot, entry.name);
+      const dirPath = path.join(hotlinesRoot, entry.name);
       const files = fs
         .readdirSync(dirPath, { withFileTypes: true })
         .filter((file) => file.isFile())
         .map((file) => file.name)
         .sort();
       return {
-        subagent_id: entry.name,
-        path: `subagents/${entry.name}`,
+        hotline_id: entry.name,
+        path: `hotlines/${entry.name}`,
         files
       };
     })
-    .sort((left, right) => left.subagent_id.localeCompare(right.subagent_id));
+    .sort((left, right) => left.hotline_id.localeCompare(right.hotline_id));
 
   return {
     package_name: readJson(path.join(CONTRACTS_DIR, "package.json")).name,
@@ -82,7 +82,7 @@ function collectTemplateManifest() {
     source_templates_dir: "docs/templates",
     source_protocol_docs: PROTOCOL_DOC_SOURCES,
     catalog_templates: catalogTemplates,
-    subagents
+    hotlines
   };
 }
 

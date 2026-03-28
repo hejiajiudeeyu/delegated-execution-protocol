@@ -1,7 +1,7 @@
 {
   "name": "@delexec/contracts",
   "version": "0.1.1",
-  "description": "Protocol enums, error registry, canonicalization helpers, and packaged templates for remote subagent execution",
+  "description": "Protocol enums, error registry, canonicalization helpers, and packaged templates for remote hotline execution",
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -25,7 +25,7 @@
   "keywords": [
     "protocol",
     "contracts",
-    "subagent",
+    "hotline",
     "delegated-execution"
   ]
 }

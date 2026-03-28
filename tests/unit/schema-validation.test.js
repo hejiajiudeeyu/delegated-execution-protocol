@@ -8,11 +8,11 @@ function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
 }
 
-function validateWireResult(result, subagentId) {
+function validateWireResult(result, hotlineId) {
   expect(result.request_id).toBeTypeOf("string");
   expect(result.result_version).toBe("0.1.0");
-  expect(result.subagent_id).toBe(subagentId);
-  expect(result.seller_id).toMatch(/^seller_/);
+  expect(result.hotline_id).toBe(hotlineId);
+  expect(result.responder_id).toMatch(/^responder_/);
   expect(["ok", "error"]).toContain(result.status);
   expect(result.timing).toBeTypeOf("object");
   if ("usage" in result) {
@@ -34,11 +34,11 @@ function validateWireResult(result, subagentId) {
 }
 
 describe("template schema validation", () => {
-  const root = path.resolve(process.cwd(), "docs/templates/subagents");
+  const root = path.resolve(process.cwd(), "docs/templates/hotlines");
 
-  for (const subagentId of ["foxlab.text.classifier.v1", "owlworks.data.extractor.v1"]) {
-    it(`${subagentId} examples match input/output schemas`, () => {
-      const dir = path.resolve(root, subagentId);
+  for (const hotlineId of ["foxlab.text.classifier.v1", "owlworks.data.extractor.v1"]) {
+    it(`${hotlineId} examples match input/output schemas`, () => {
+      const dir = path.resolve(root, hotlineId);
       const inputSchema = readJson(path.resolve(dir, "input.schema.json"));
       const outputSchema = readJson(path.resolve(dir, "output.schema.json"));
       const contract = readJson(path.resolve(dir, "example-contract.json"));
@@ -53,7 +53,7 @@ describe("template schema validation", () => {
 
       const outputOk = validateOutput(result.output);
       expect(outputOk, JSON.stringify(validateOutput.errors || [])).toBe(true);
-      validateWireResult(result, subagentId);
+      validateWireResult(result, hotlineId);
     });
   }
 });

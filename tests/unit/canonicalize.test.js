@@ -40,11 +40,11 @@ describe("canonicalizeResultPackageForSignature (extended)", () => {
     const result = canonicalizeResultPackageForSignature({
       request_id: "req_1",
       result_version: "0.1.0",
-      seller_id: "s1",
-      subagent_id: "a1",
+      responder_id: "s1",
+      hotline_id: "a1",
       status: "ok",
       output: {},
-      message_type: "remote_subagent_result",
+      message_type: "remote_hotline_result",
       verification: { display_code: "CODE123" },
       artifacts: [{ name: "report.pdf", sha256: "abc" }],
       error: null,
@@ -58,7 +58,7 @@ describe("canonicalizeResultPackageForSignature (extended)", () => {
     });
 
     expect(Object.keys(result).sort()).toEqual(
-      ["artifacts", "error", "message_type", "output", "request_id", "result_version", "seller_id", "status", "subagent_id", "timing", "usage", "verification"]
+      ["artifacts", "error", "hotline_id", "message_type", "output", "request_id", "responder_id", "result_version", "status", "timing", "usage", "verification"]
     );
   });
 

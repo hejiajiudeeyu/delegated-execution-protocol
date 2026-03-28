@@ -50,11 +50,11 @@ async function main() {
       }
 
       const manifest = loadBundledTemplateManifest();
-      const inputSchemaPath = resolveBundledTemplatePath("subagents/local.summary.v1/input.schema.json");
+      const inputSchemaPath = resolveBundledTemplatePath("hotlines/local.summary.v1/input.schema.json");
       if (!fs.existsSync(inputSchemaPath)) {
         throw new Error("contracts_template_input_schema_missing");
       }
-      if (!manifest.subagents.some((entry) => entry.subagent_id === "local.summary.v1")) {
+      if (!manifest.hotlines.some((entry) => entry.hotline_id === "local.summary.v1")) {
         throw new Error("contracts_template_manifest_missing_local_summary");
       }
       if (!fs.existsSync(getBundledTemplatesRoot())) {
@@ -66,7 +66,7 @@ async function main() {
 
       console.log(JSON.stringify({
         ok: true,
-        packaged_subagents: manifest.subagents.length,
+        packaged_hotlines: manifest.hotlines.length,
         catalog_templates: manifest.catalog_templates.length
       }));
     `;
@@ -76,12 +76,12 @@ async function main() {
     });
     const payload = JSON.parse(result.stdout.trim());
 
-    if (payload.ok !== true || payload.packaged_subagents < 1 || payload.catalog_templates < 1) {
+    if (payload.ok !== true || payload.packaged_hotlines < 1 || payload.catalog_templates < 1) {
       throw new Error("contracts_package_validation_failed");
     }
 
     console.log(
-      `[check-contracts-package] ok tarball=${tarballName} subagents=${payload.packaged_subagents} catalog_templates=${payload.catalog_templates}`
+      `[check-contracts-package] ok tarball=${tarballName} hotlines=${payload.packaged_hotlines} catalog_templates=${payload.catalog_templates}`
     );
   } finally {
     fs.rmSync(tempRoot, { recursive: true, force: true });
