@@ -1,0 +1,19 @@
+{
+  "hotline_id": "pixel.product.renderer.v1",
+  "responder_id": "responder_pixel",
+  "template_ref": "docs/templates/hotlines/pixel.product.renderer.v1/",
+  "input": {
+    "product_description": "一款黑色哑光铝合金外壳的蓝牙耳机，弧形头梁，带软垫耳罩，侧面有金属品牌标识。展示科技感和高端质感。",
+    "background_style": "dark_premium",
+    "angle": "three_quarter",
+    "resolution": "1500x1500",
+    "quantity": 2
+  },
+  "input_attachments": [
+    {
+      "role": "product_photo",
+      "filename": "headphone_raw.jpg",
+      "mime_type": "image/jpeg"
+    }
+  ]
+}

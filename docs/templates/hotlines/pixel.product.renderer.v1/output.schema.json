@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "pixel.product.renderer.v1 Output Schema",
+  "description": "Output from Pixel Product Renderer. Returns metadata for each generated render; the actual image files are returned as output attachments. The model internals, style transfer parameters, and post-processing pipeline details are not exposed.",
+  "type": "object",
+  "required": ["renders", "metadata"],
+  "properties": {
+    "renders": {
+      "type": "array",
+      "description": "List of rendered product images. Each entry corresponds to an output attachment file.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["attachment_role", "width", "height", "format"],
+        "properties": {
+          "attachment_role": {
+            "type": "string",
+            "description": "The role name of the corresponding output attachment (e.g. 'rendered_image_1')."
+          },
+          "width": {
+            "type": "integer",
+            "description": "Width of the rendered image in pixels."
+          },
+          "height": {
+            "type": "integer",
+            "description": "Height of the rendered image in pixels."
+          },
+          "format": {
+            "type": "string",
+            "description": "File format of the rendered image.",
+            "enum": ["jpeg", "png", "webp"]
+          },
+          "background_applied": {
+            "type": "string",
+            "description": "The background style that was applied to this render."
+          },
+          "angle_applied": {
+            "type": "string",
+            "description": "The camera angle used for this render."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["render_time_ms"],
+      "properties": {
+        "render_time_ms": {
+          "type": "integer",
+          "description": "Total server-side rendering time in milliseconds."
+        },
+        "model_version": {
+          "type": "string",
+          "description": "Internal renderer model version used for this job."
+        },
+        "background_removal_applied": {
+          "type": "boolean",
+          "description": "Whether background removal was applied to the source product photo before rendering."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

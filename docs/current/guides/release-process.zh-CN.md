@@ -11,7 +11,7 @@ Release Process
 
 ## Goals
 
-- 为“平台”、“买家”、“卖家”和“中继”生成版本化容器映像
+- 为“平台”、“Caller”、“Responder”和“中继”生成版本化容器映像
 - 为“@delexec/contracts”生成一个发布型协议包
 - 验证源构建撰写路径和基于图像的撰写路径
 - 验证协议模板/文档可以从打包的工件而不是单一存储库相对路径中使用
@@ -41,9 +41,9 @@ Recommended tags:
 
 1.剪切一个版本标签，例如`v0.1.0`
 2. 运行协议包检查并确认“@delexec/contracts”仍然打包、安装并公开捆绑的模板/文档
-3. 运行打包服务检查并确认 `platform` / `buyer` / `seller` / `relay` tarball 仍然在洁净室中安装和启动
+3. 运行打包服务检查并确认 `platform` / `caller` / `responder` / `relay` tarball 仍然在洁净室中安装和启动
 4. 运行 packaged-e2e 检查并确认完整的 e2e 套件仍然通过通过“E2E_*_CMD”注入的已安装 tarball 命令
-5. 让“Images”工作流程发布“rsp-platform”、“rsp-buyer”、“rsp-seller”和“rsp-relay”
+5. 让“Images”工作流程发布“rsp-platform”、“rsp-caller”、“rsp-responder”和“rsp-relay”
 6. 确保 `docs/archive/releases/vX.Y.Z.md` 存在并且 `docs/archive/releases/compatibility-matrix.md` 包含该标签
 7. 验证针对 GHCR 传递的匹配“Published Images Smoke”工作流程
 8. 将任何外部部署环境更新为已发布的“IMAGE_TAG”
@@ -58,7 +58,7 @@ Recommended tags:
 -`service_runtime_failed`：容器已启动但进入`不健康/退出/重新启动`
 - `health_check_timeout`：服务没有及时变得健康
 - `postgres_crud_check_failed`：数据库启动但基本 CRUD 失败
-- `register_failed` / `catalog_failed` / `buyer_remote_request_failed` / `ack_not_ready` / `buyer_result_not_ready`：业务路径回归
+- `register_failed` / `catalog_failed` / `caller_remote_request_failed` / `ack_not_ready` / `caller_result_not_ready`：业务路径回归
 
 ## 兼容性说明
 

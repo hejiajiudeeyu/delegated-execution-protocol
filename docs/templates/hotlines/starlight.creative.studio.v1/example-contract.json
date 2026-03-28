@@ -1,0 +1,13 @@
+{
+  "hotline_id": "starlight.creative.studio.v1",
+  "responder_id": "responder_starlight",
+  "template_ref": "docs/templates/hotlines/starlight.creative.studio.v1/",
+  "input": {
+    "prompt": "一款高端护肤精华的产品宣传图，背景简洁，光线柔和，突出产品质感",
+    "style_preset": "product_clean",
+    "output_format": "jpeg",
+    "quantity": 2,
+    "aspect_ratio": "1:1"
+  },
+  "input_attachments": []
+}

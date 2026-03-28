@@ -14,7 +14,7 @@
 flowchart LR
     C["Runtime Behavior<br/>apps/*/src/server.js"] --> S["Spec Layer / 规范层"]
     T["Behavior Verification<br/>tests/integration/*<br/>tests/e2e/*"] --> S
-    J["Schemas and Templates<br/>docs/templates/subagents/*/*.json"] --> S
+    J["Schemas and Templates<br/>docs/templates/hotlines/*/*.json"] --> S
     U["Schema Validation<br/>tests/unit/schema-validation.test.js"] --> S
     A["Architecture Invariants<br/>../spec/architecture.md"] --> S
 
@@ -33,7 +33,7 @@ flowchart LR
 ## 判定规则
 
 - 接口实际返回什么：以 `apps/*/src/server.js` 和 integration/e2e tests 为准
-- 模板输入输出长什么样：以 `docs/templates/subagents/*/*.json` 和 schema 校验测试为准
+- 模板输入输出长什么样：以 `docs/templates/hotlines/*/*.json` 和 schema 校验测试为准
 - 系统不变量、模式边界、信任模型：以 `../spec/architecture.md` 为准
 - `../spec/platform-api-v0.1.md`、`../guides/integration-playbook.md`、`../spec/defaults-v0.1.md` 必须贴合上述真相源
 - `docs/planned/*` 只描述尚未成为当前行为真相的设计，不得定义当前协议事实

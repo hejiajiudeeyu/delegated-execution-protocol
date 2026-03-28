@@ -1,20 +1,20 @@
-# User Registration Call Flow (Default Buyer Identity + API Key)
+# User Registration Call Flow (Default Caller Identity + API Key)
 
 ## 关键澄清
 
-- 主体模型：注册后默认获得 `buyer` 身份。
-- `seller` 不是独立初始身份；只有当该用户的 remote subagent 完成 onboarding/导入后才激活 `seller` 能力。
-- 接入模式：`identity_onboarding_mode=register_buyer_default_then_activate_seller_on_remote_subagent_onboarding`。
+- 主体模型：注册后默认获得 `caller` 身份。
+- `responder` 不是独立初始身份；只有当该用户的 remote hotline 完成 onboarding/导入后才激活 `responder` 能力。
+- 接入模式：`identity_onboarding_mode=register_caller_default_then_activate_responder_on_remote_hotline_onboarding`。
 - 鉴权方式：`api_auth_mode=api_key`。
 - API Key 仅在签发时明文返回一次；平台仅保存摘要。
 - API Key 与 `user_id` 绑定，按 `role_scopes` 控制可调用接口。
-- 初始权限：注册成功后仅下发 `buyer` scope，不包含 `seller` scope。
+- 初始权限：注册成功后仅下发 `caller` scope，不包含 `responder` scope。
 
 ## 阶段代号与编号规则（v1.1）
 
 - `A`：注册申请提交
 - `B`：字段校验与风险校验
-- `C`：用户主体落库（默认 buyer）
+- `C`：用户主体落库（默认 caller）
 - `D`：API Key 签发与绑定
 - `E`：激活确认与回执
 
@@ -41,7 +41,7 @@ sequenceDiagram
     APP->>P: [A2-REQ] POST /v1/users/register (profile)
 
     P->>P: [B1-ACT] 基础字段校验（必填/格式/唯一性）
-    P->>P: [B2-ACT] 规范化默认角色集（role_scopes={buyer})
+    P->>P: [B2-ACT] 规范化默认角色集（role_scopes={caller})
 
     alt 字段校验失败
         P-->>APP: [B1-F1] 400 VALIDATION_FAILED (field_errors)
@@ -55,7 +55,7 @@ sequenceDiagram
         else 风险通过
             R-->>P: [B3-RES] allow
 
-            P->>DB: [C1-REQ] 创建用户记录（user_id, role_scopes={buyer}）
+            P->>DB: [C1-REQ] 创建用户记录（user_id, role_scopes={caller}）
             alt 写入失败
                 DB-->>P: [C1-F1] 存储异常/唯一键冲突
                 P-->>APP: [C1-F2] 500/409
@@ -72,9 +72,9 @@ sequenceDiagram
                     KMS-->>P: [D1-RES] api_key_plaintext + key_fingerprint
                     P->>DB: [D2-REQ] 保存 key 摘要与元数据
                     DB-->>P: [D2-RES] key binding persisted
-                    P->>DB: [D3-ACT] 初始化权限策略（role_scopes={buyer}）
+                    P->>DB: [D3-ACT] 初始化权限策略（role_scopes={caller}）
 
-                    P-->>APP: [E1-RES] 201 user + roles={buyer} + api_key(once)
+                    P-->>APP: [E1-RES] 201 user + roles={caller} + api_key(once)
                     APP-->>U: [E1-END_SUCCESS] 展示注册成功与一次性密钥
                 end
             end
@@ -85,7 +85,7 @@ sequenceDiagram
 ## 最小状态机（建议）
 
 - 用户状态：`PENDING -> ACTIVE | REJECTED`
-- 角色状态：`BUYER_ACTIVE`（默认）; `SELLER_ACTIVE`（由 remote subagent onboarding/导入后激活）
+- 角色状态：`CALLER_ACTIVE`（默认）; `RESPONDER_ACTIVE`（由 remote hotline onboarding/导入后激活）
 - Key 状态：`ISSUED -> ACTIVE -> ROTATING -> REVOKED`
 
 ## 失败分支最小处置

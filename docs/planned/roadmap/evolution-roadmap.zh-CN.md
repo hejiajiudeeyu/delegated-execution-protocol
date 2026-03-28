@@ -5,11 +5,11 @@
 
 # 规划路线图（v0.2+）
 
-本文档承接的所有不属于`L0本地传输`最小闭环、但已经确认有价值的后续能力。
+本文档承接所有不属于 `L0 local transport` 最小闭环、但已经确认有价值的后续能力。
 
 使用原则：
-- `docs/current/spec/architecture.md`、`docs/current/spec/platform-api-v0.1.md`、`docs/current/guides/integration-playbook.md` 只保留当前已实现且已验证的简单能力。
-- 任何需要额外协议状态、外部运输约束、长期运输维能力或治理流程的内容，统一迁入本文档。
+- `docs/current/spec/architecture.md`、`docs/current/spec/platform-api-v0.1.md`、`docs/current/guides/integration-playbook.md` 只保留当前已实现且已验证的必需能力。
+- 任何需要额外协议状态、外部 transport 约束、长期运维能力或治理流程的内容，统一迁入本文档。
 
 ## 1. 术语映射
 
@@ -17,164 +17,160 @@
 
 | 语义层 | 推荐术语 | 说明 |
 | :--- | :--- | :--- |
-| 请求本地智能体 | `买家代理` / `本地代理` | 运行在买方一侧的本地编排者负责，选路、签订合同、验收结果 |
-| 最后可调用能力 | `远程子代理` | 协议中的外部执行能力单元，由 `seller_id + subagent_id` 唯一标识 |
-| 提供方 | 身份`卖家` | 终端能力的发布者/维护者/资源归属主体 |
-| 请求出现组件 | `买方控制器` | 本仓库中的参考实现组件，不是新的协议角色 |
-| 卖方实现组件`卖家控制器` / `卖家运行时` | 本仓库中的参考实现组件，用于承载远程子代理的接单、鉴权、回包 |
+| 本地请求智能体 | `Caller Agent` / `Local Agent` | 运行在 caller 侧的本地编排者，负责选路、组装合约、验收结果 |
+| 远端可调用能力 | `Remote Hotline` | 协议中的远端执行能力单元，由 `responder_id + hotline_id` 唯一标识 |
+| 提供方身份 | `Responder` | 远端能力的发布者、维护者与资源归属主体 |
+| 请求侧实现组件 | `Caller Controller` | 本仓库中的参考实现组件，不是新的协议角色 |
+| 提供侧实现组件 | `Responder Controller` / `Responder Runtime` | 本仓库中的参考实现组件，用于承载 Remote Hotline 的接单、鉴权与回包 |
 
 建议：
-- 面向协议读者或外部接入方时，优先使用 `Buyer Agent (Local Agent)` 与 `Remote Subagent`。
-- 面向本仓库参考实现时，再使用 `Buyer Controller`、`Seller Controller`、`Seller Runtime Template` 等实现术语。
-- `Seller Agent`词这个首先作为协议主要叙述使用，因为它很容易和`Remote Subagent`本体混乱。
+- 面向协议读者或外部接入方时，优先使用 `Caller Agent (Local Agent)` 与 `Remote Hotline`。
+- 面向本仓库参考实现时，再使用 `Caller Controller`、`Responder Controller`、`Responder Runtime Template` 等实现术语。
+- `Responder Agent` 这个词尽量少作为协议主叙事使用，因为它容易和 `Remote Hotline` 本体混淆。
 
-## 2.已迁出的后续能力
+## 2. 已迁出的后续能力
 
-以下容量不再占用L0主要规范正文：
+以下能力不再占用 L0 主规范正文：
 
-### 2.1 身份与注册管理
-- 在线提交远程子代理草案的正式 API
-- 分代理注册审核流、导入流、灰度发布流
-- API key 轮换 / 吊销 / 细粒度审计
-- 卖方成交轮换与双键窗口
+### 2.1 身份与注册治理
+- 在线提交 remote hotline 草案的正式 API
+- hotline registration 审核流、导入流、灰度发布流
+- API key 轮换、吊销与细粒度审计
+- Responder 公钥轮换与双 key 窗口
 
-### 2.2 目录与搜索
+### 2.2 目录与检索
 - `GET /v1/catalog/search`
 - `GET /v1/catalog/snapshot`
 - `GET /v1/catalog/changes`
-- 候选筛选策略配置、解释字段、领域策略
+- 候选筛选策略配置、解释字段与领域策略
 
 ### 2.3 传输与会话增强
-- Email / SMTP / Webhook 的 subject、thread、header 规范
-- Email 结果邮件的 MIME/profile 扩展（当前实现已固定为“纯 JSON 正文 + 任选附件工件”）
-- 多运输节点发现、中继、邮箱命名空间
+- Email、SMTP、Webhook 的 subject、thread、header 规范
+- Email 结果邮件的 MIME/profile 扩展
+- 多 transport 节点发现、relay、mailbox namespace
 - 多轮对话 / 会话化交互
 
-### 2.4 状态、拆迁与治理
-- “跑步/进展”事件
-- 人工复核/`DISPUTED`全流程
-- 指标聚合查询、相同规则、仪表盘
-- 多机场调度扩展（如 `tenant_quota`）
+### 2.4 状态、观测与治理
+- `RUNNING / PROGRESS` 事件
+- 人工复核 / `DISPUTED` 全流程
+- metrics 聚合查询、告警规则与仪表盘
+- 多租户调度扩展（如 `tenant_quota`）
 
 ## 3. 多轮对话能力
 
 ### 3.1 目标
 
-当前L0只覆盖“单次请求 -> ACK -> 单次结果包”的闭环。  
-后续如果要支持 `Buyer Agent` 与 `Remote Subagent` 的多轮次对话，需要把一次调用从“单包任务”升级为“会话（session）”。
+当前 L0 只覆盖“单次请求 -> ACK -> 单次结果包”的闭环。  
+后续如果要支持 `Caller Agent` 与 `Remote Hotline` 的多轮次对话，需要把一次调用从“单包任务”升级为“会话（session）”。
 
 适用场景：
-- 远程分代理需要追问补充信息
-- 买家代理需要逐轮澄清要求或采购中间产物
-- 任务本质上是对话式协作，而不是单次离散执行
+- Remote Hotline 需要追问补充信息
+- Caller Agent 需要逐轮澄清要求或验收中间产物
+- 任务天然是对话式协作，而不是单次离散执行
 
-### 3.2为什么不模拟L0
+### 3.2 为什么不放进 L0
 
-多轮对话会显着增加协议复杂度，因为它至少会引入：
+多轮对话会显著增加协议复杂度，因为它至少会引入：
 - `session_id` 与 `turn_id` 语义
 - 谁在等谁回复的状态机
 - 会话级超时与单轮超时
-- 成绩单 边界与验签边界
+- transcript 完整性与验签边界
 - 中间轮次是否允许工具调用、是否允许部分结果、何时终态
 
 结论：
-- 不建议把多轮对话导入当前L0。
-- L0应先把“单次委托执行”的最小真相源稳定下来。
-- 多轮对话建议进入 `post-L0 / v0.2+`，并在单轮闭环、ACK、签名、超时、目录和传输抽象稳定后再做。
+- 不建议把多轮对话纳入当前 L0。
+- L0 应先把“单次委托执行”的最小真相源稳定下来。
+- 多轮对话建议进入 `post-L0 / v0.2+`，并在单轮闭环、ACK、签名、超时、目录和 transport 抽象稳定后再做。
 
-### 3.3 建议的最小化设计
+### 3.3 建议的最小设计
 
-如果进入下一阶段，建议采用“会话包裹单轮消息”的方式，而不是升级现有单轮模型。
+如果进入下一阶段，建议采用“会话包裹单轮消息”的方式，而不是推翻现有单轮模型。
 
-建议增加最大字段：
+建议新增的最小字段：
 - `session_id`：一次多轮交互的会话标识
 - `turn_id`：当前轮次标识
-- `parent_turn_id`：回复所对应的上一声
-- `发言人`：`buyer_agent |远程子代理`
-- `message_type`：`消息 |澄清|部分结果 |最终结果 |错误`
+- `parent_turn_id`：回复所对应的上一轮
+- `speaker`：`caller_agent | remote_hotline`
+- `message_type`：`message | clarification | partial_result | final_result | error`
 - `expects_reply`：当前轮是否要求对方继续回复
-- `session_status`：`打开 |等待远程 |等待本地 |已完成 |失败 |超时`
+- `session_status`：`OPEN | WAITING_REMOTE | WAITING_LOCAL | COMPLETED | FAILED | TIMED_OUT`
 - `turn_timeout_s`：单轮等待时限
-- `transcript_hash`（任选）：用于绑定到当前已确认对话历史记录
+- `transcript_hash`（可选）：用于绑定到当前已确认对话历史
 
 建议沿用现有字段：
-- `request_id` 仍然保留，作为整个次任务/会话的全局主键
-- `thread_hint` 继续作为传输侧关联辅助
--最终结果仍通过签名结果包收束
+- `request_id` 仍保留，作为整次任务或会话的全局主键
+- `thread_hint` 继续作为 transport 侧关联辅助
+- 最终结果仍通过签名结果包收束
 
 ### 3.4 推荐的鉴权方式
 
-并非所有建议轮都重新颁发独立任务代币。  
-更合理的方法是：
-- 会话开始时，由买家申请一次 `session-scoped token`
-- 令牌绑定 `request_id/session_id/buyer_id/seller_id/subagent_id`
-- 每个回合只携带 `session_id +turn_id`，由基于股票会话上下文校验
+不建议每一轮都重新签发独立 task token。  
+更合理的方式是：
+- 会话开始时，由 caller 申请一次 `session-scoped token`
+- token 绑定 `request_id/session_id/caller_id/responder_id/hotline_id`
+- 每一轮 turn 只携带 `session_id + turn_id`，由 responder 基于会话上下文校验
 
 这样可以避免：
 - 每轮都重新走平台签发
-- 令牌风暴
-- 级鉴权状态难以恢复
+- token 风暴
+- turn 级鉴权状态难以收敛
 
 ### 3.5 推荐的状态机演进
 
 建议在 v0.2+ 才引入以下会话状态：
-- 买家侧：`CREATED -> SENT -> ACKED -> WAITING_REMOTE/WAITING_LOCAL ->terminal`
-- 远程子代理侧：`RECEIVED -> ACKED -> WAITING_REMOTE/WAITING_LOCAL -> FINALIZING ->terminal`
+- Caller 侧：`CREATED -> SENT -> ACKED -> WAITING_REMOTE/WAITING_LOCAL -> terminal`
+- Remote Hotline 侧：`RECEIVED -> ACKED -> WAITING_REMOTE/WAITING_LOCAL -> FINALIZING -> terminal`
 
 L0 不需要这些状态。
 
-### 3.6何时实现
+### 3.6 何时实现
 
-建议的顺序：
-1.先完成L0单轮闭环
-2.重新完成至少一种稳定的外部运输支架
-3.然后引入会话级字段与状态机
-4.最后再考虑多轮对话与会话级别的建立
+建议顺序：
+1. 先完成 L0 单轮闭环
+2. 至少补齐一种稳定的外部 transport
+3. 再引入会话级字段与状态机
+4. 最后再考虑多轮对话与会话级治理
 
-可用：
-- 现在不应该把它并入 L0 必做清单
--但现在就应该在术语和字段命名上避免堵塞死后续演进路径
+## 4. 仓库拆分
 
-## 4.仓库拆分
-
-L0 闭环稳定后，当前 monorepo 将分割为三个独立仓库：
+L0 闭环稳定后，当前 monorepo 将拆分为三个独立仓库：
 
 | 仓库 | 职责 |
 | :--- | :--- |
-| `委托执行协议` | 协议定义（、对象模型、授权、合同、结果、版本兼容） |
-| `委托执行客户端` | 终端用户统一客户端（买方主流程、卖方预置与开通、市场接入） |
-| `委托执行平台自主机` | 平台自部署方案（平台服务、配置配置、运维、监控） |
+| `delegated-execution-protocol` | 协议定义、对象模型、授权、合约、结果验证、版本兼容 |
+| `delegated-execution-client` | 终端用户统一客户端（caller 主流程、responder 启用、marketplace 接入） |
+| `delegated-execution-platform-selfhost` | 平台自部署方案（平台服务、部署配置、运维、监控） |
 
-分割时机、依赖拓扑、共享包归属、预分割准备及执行步骤的完整规划参见`design/repo-split-plan.md`。
+分割时机、依赖拓扑、共享包归属、预拆分准备与执行步骤，详见 `../design/repo-split-plan.md`。
 
-## 5.推荐近期迁移动作
+## 5. 推荐近期迁移动作
 
-在L0主要规范标准中，后续能力建议按以下顺序恢复：
+建议按以下顺序恢复后续能力：
+1. `POST /v2/hotlines` 正式 onboarding API
+2. `GET /v1/metrics/summary` 聚合查询
+3. 外部 transport 适配器（Email MCP / SMTP API / HTTP Webhook）
+4. 目录 snapshot / changes 接口
+5. 会话化多轮对话
+6. 人工复核与治理流程
 
-1. `POST /v1/catalog/subagents` 正式子代理注册 API
-2.`GET /v1/metrics/summary`聚合查询
-3.外部传输适配器（Email MCP / SMTP API / HTTP Webhook）
-4.目录快照/增量接口
-5.会话化多轮对话
-6.人工复核与治理流程
-
-## 6.对当前命名的建议
+## 6. 对当前命名的建议
 
 建议未来逐步收敛为两层命名：
 
 ### 6.1 协议层
-- 买家
-- 买家代理（当地代理）
-- 卖家
-- 远程子代理
-- 平台
+- Caller
+- Caller Agent（Local Agent）
+- Responder
+- Remote Hotline
+- Platform
 
 ### 6.2 参考实现层
-- 买家控制器
-- 卖家控制器
-- 卖家运行时模板
-- 传输适配器
+- Caller Controller
+- Responder Controller
+- Responder Runtime Template
+- Transport Adapter
 
-这样可以保留：
-- 对外协议报道更稳定
-- 对内实现命名必需强行重命名代码目录
+这样可以同时保留：
+- 对外协议叙事稳定
+- 对内实现命名清晰
+- 不强迫代码目录跟着产品叙事反复改名

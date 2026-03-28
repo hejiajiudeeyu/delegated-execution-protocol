@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "atlas.knowledge.qa.v1 Input Schema",
+  "description": "Input parameters for Atlas Enterprise Knowledge QA. Caller provides a question in natural language. The private knowledge base, retrieval strategy, embedding models, and domain-tuned ranking logic all run on the Responder side and are never exposed to the Caller.",
+  "type": "object",
+  "required": ["question"],
+  "properties": {
+    "question": {
+      "type": "string",
+      "description": "The question to answer. Should be a natural language query. The Responder's retrieval pipeline handles all disambiguation and reformulation internally.",
+      "minLength": 1,
+      "maxLength": 1000
+    },
+    "language": {
+      "type": "string",
+      "description": "BCP-47 language tag for the desired response language. Defaults to the detected language of the question.",
+      "pattern": "^[a-z]{2}(-[A-Z]{2})?$",
+      "default": "zh-CN"
+    },
+    "max_sources": {
+      "type": "integer",
+      "description": "Maximum number of source citations to include in the response. Does not affect retrieval depth, only the number of citations surfaced.",
+      "minimum": 1,
+      "maximum": 10,
+      "default": 3
+    },
+    "context_hint": {
+      "type": "string",
+      "description": "Optional domain or topic hint to guide retrieval focus (e.g. 'HR policy', 'Q3 financial report'). Does not change which knowledge base is searched.",
+      "maxLength": 200
+    }
+  },
+  "additionalProperties": false
+}

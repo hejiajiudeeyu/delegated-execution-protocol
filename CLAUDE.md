@@ -25,7 +25,7 @@ This repository owns:
 
 This repository does not own:
 
-- buyer or seller runtime implementation
+- caller or responder runtime implementation
 - end-user CLI UX
 - Docker or compose deployment
 

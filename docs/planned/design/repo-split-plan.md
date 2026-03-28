@@ -2,7 +2,7 @@
 
 ## 1. 背景
 
-当前 monorepo 包含协议定义、参考实现（buyer/seller）、平台服务、部署配置、运维 CLI 与控制台。随着 L0 闭环趋于稳定，需要将仓库拆分为独立职责的多个仓库，以便于协议独立演进、客户端独立分发、平台独立部署。
+当前 monorepo 包含协议定义、参考实现（caller/responder）、平台服务、部署配置、运维 CLI 与控制台。随着 L0 闭环趋于稳定，需要将仓库拆分为独立职责的多个仓库，以便于协议独立演进、客户端独立分发、平台独立部署。
 
 ## 2. npm scope
 
@@ -32,7 +32,7 @@
 
 - 语义准确——协议核心是"跨边界委托执行"，而非普通消息通信或工具调用。
 - 与主流 agent 叙事自然衔接——MCP 是工具接入层，A2A 是 agent 间互操作层，本协议指向 execution delegation 这一层。
-- 扩展性好——参与方无论叫 subagent、provider、executor、seller，协议名都不受限。
+- 扩展性好——参与方无论叫 hotline、provider、executor、responder，协议名都不受限。
 
 应包含内容：
 
@@ -43,17 +43,17 @@
 | `docs/templates/` | 能力声明模板与 JSON Schema |
 | `docs/current/diagrams/` | 当前协议层流程图 |
 | `docs/planned/roadmap/evolution-roadmap.md` | 演进规划 |
-| `docs/current/spec/remote-subagent-scope.md` | 范围指引 |
+| `docs/current/spec/remote-hotline-scope.md` | 范围指引 |
 
 发布形式：npm 包（`@delexec/contracts`），供客户端和平台仓库作为上游依赖引用。
 
 ### 3.2 delegated-execution-client（客户端仓库）
 
-面向终端用户的统一客户端，支持 buyer 主流程、seller 功能预置与启用，并内置 marketplace 接入能力。
+面向终端用户的统一客户端，支持 caller 主流程、responder 功能预置与启用，并内置 marketplace 接入能力。
 
 命名理由：
 
-- 足够宽——可同时容纳 buyer 和 seller 两侧能力。
+- 足够宽——可同时容纳 caller 和 responder 两侧能力。
 - 不会把 marketplace 升格为仓库主名——marketplace 只是内置接入能力之一。
 - 符合用户直觉——"client"就是用户安装和使用的那个东西。
 
@@ -61,12 +61,12 @@
 
 | 来源路径 | 说明 |
 | :--- | :--- |
-| `packages/buyer-controller-core/` | 买家端核心逻辑 |
-| `packages/seller-runtime-core/` | 卖家端运行时核心 |
+| `packages/caller-controller-core/` | caller-side core logic |
+| `packages/responder-runtime-core/` | responder-side runtime core |
 | `packages/transports/` | 传输适配器（local、relay-http、email） |
 | `packages/sqlite-store/` | 客户端侧本地存储 |
-| `apps/buyer-controller/` | 买家控制器服务 |
-| `apps/seller-controller/` | 卖家控制器服务 |
+| `apps/caller-controller/` | Caller Controller service |
+| `apps/responder-controller/` | Responder Controller service |
 | `apps/ops/` | 统一 Ops CLI |
 | `apps/ops-console/` | 用户控制台 |
 | 客户端侧 unit/integration 测试 | — |
@@ -89,7 +89,7 @@
 | `apps/platform-console/` | 平台管理控制台 |
 | `apps/transport-relay/` | 传输中继服务 |
 | `packages/postgres-store/` | PostgreSQL 存储适配器 |
-| `deploy/` | 全部部署配置（platform、relay、buyer、seller、ops、all-in-one） |
+| `deploy/` | 全部部署配置（platform、relay、caller、responder、ops、all-in-one） |
 | `docker-compose.yml` | 根 compose |
 | `Dockerfile.workspace` | 多应用构建基镜像 |
 | `Makefile` | 部署快捷命令 |
@@ -115,8 +115,8 @@ delegated-execution    delegated-execution
 | 包 | 归属仓库 | 消费方 | 说明 |
 | :--- | :--- | :--- | :--- |
 | `contracts` | protocol | client、platform-selfhost | 协议层定义，作为 npm 包发布 |
-| `buyer-controller-core` | client | — | buyer 侧核心逻辑 |
-| `seller-runtime-core` | client | — | seller 侧核心逻辑 |
+| `caller-controller-core` | client | — | caller 侧核心逻辑 |
+| `responder-runtime-core` | client | — | responder 侧核心逻辑 |
 | `sqlite-store` | client | — | 客户端默认存储 |
 | `postgres-store` | platform-selfhost | — | 平台默认存储 |
 | `transport-local` | client | — | 本地传输，仅客户端使用 |
@@ -127,7 +127,7 @@ delegated-execution    delegated-execution
 
 | 侧 | 默认存储 | 理由 |
 | :--- | :--- | :--- |
-| 客户端（buyer/seller/ops） | SQLite | 零运维、零配置、安装即用，不需要用户额外启动数据库进程 |
+| 客户端（caller/responder/ops） | SQLite | 零运维、零配置、安装即用，不需要用户额外启动数据库进程 |
 | 平台（platform-api） | PostgreSQL | 多租户并发写入、事务隔离、聚合查询、多实例共享 |
 
 设计约束：
@@ -144,7 +144,7 @@ delegated-execution    delegated-execution
 
 平台选择 PostgreSQL 的具体收益：
 
-- 支持多个 seller heartbeat、多个 buyer 的 token 签发和事件上报并发到达。
+- 支持多个 responder heartbeat、多个 caller 的 token 签发和事件上报并发到达。
 - 支持审核状态变更、目录条目更新等需要事务隔离的操作。
 - 支持指标聚合查询与运维观测。
 - 支持多实例水平扩展共享同一数据库。
@@ -161,7 +161,7 @@ delegated-execution    delegated-execution
 
 ### 7.2 ops CLI 对 transport-relay 的直接依赖
 
-当前 `ops` 应用直接依赖 `buyer-controller`、`seller-controller`、`transport-relay` 三个 app 作为 workspace 依赖。拆分后 `transport-relay` 归入自部署仓库。
+当前 `ops` 应用直接依赖 `caller-controller`、`responder-controller`、`transport-relay` 三个 app 作为 workspace 依赖。拆分后 `transport-relay` 归入自部署仓库。
 
 解决方案：
 
@@ -172,7 +172,7 @@ delegated-execution    delegated-execution
 
 ### 7.3 E2E 测试拆分
 
-当前 `tests/` 目录是统一的，e2e 测试跨 buyer/seller/platform 全链路。
+当前 `tests/` 目录是统一的，e2e 测试跨 caller/responder/platform 全链路。
 
 拆分策略：
 

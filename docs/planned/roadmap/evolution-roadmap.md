@@ -12,26 +12,26 @@
 
 | 语义层 | 推荐术语 | 说明 |
 | :--- | :--- | :--- |
-| 买方本地智能体 | `Buyer Agent` / `Local Agent` | 运行在 buyer 侧的本地编排者，负责选路、组装合约、验收结果 |
-| 远端可调用能力 | `Remote Subagent` | 协议中的远端执行能力单元，由 `seller_id + subagent_id` 唯一标识 |
-| 提供方身份 | `Seller` | 远端能力的发布者 / 维护者 / 资源归属主体 |
-| 买方实现组件 | `Buyer Controller` | 本仓库中的参考实现组件，不是新的协议角色 |
-| 卖方实现组件 | `Seller Controller` / `Seller Runtime` | 本仓库中的参考实现组件，用于承载 Remote Subagent 的接单、鉴权、回包 |
+| 买方本地智能体 | `Caller Agent` / `Local Agent` | 运行在 caller 侧的本地编排者，负责选路、组装合约、验收结果 |
+| 远端可调用能力 | `Remote Hotline` | 协议中的远端执行能力单元，由 `responder_id + hotline_id` 唯一标识 |
+| 提供方身份 | `Responder` | 远端能力的发布者 / 维护者 / 资源归属主体 |
+| 买方实现组件 | `Caller Controller` | 本仓库中的参考实现组件，不是新的协议角色 |
+| 卖方实现组件 | `Responder Controller` / `Responder Runtime` | 本仓库中的参考实现组件，用于承载 Remote Hotline 的接单、鉴权、回包 |
 
 建议：
-- 面向协议读者或外部接入方时，优先使用 `Buyer Agent (Local Agent)` 与 `Remote Subagent`。
-- 面向本仓库参考实现时，再使用 `Buyer Controller`、`Seller Controller`、`Seller Runtime Template` 等实现术语。
-- `Seller Agent` 这个词尽量少作为协议主叙事使用，因为它容易和 `Remote Subagent` 本体混淆。
+- 面向协议读者或外部接入方时，优先使用 `Caller Agent (Local Agent)` 与 `Remote Hotline`。
+- 面向本仓库参考实现时，再使用 `Caller Controller`、`Responder Controller`、`Responder Runtime Template` 等实现术语。
+- `Responder Agent` 这个词尽量少作为协议主叙事使用，因为它容易和 `Remote Hotline` 本体混淆。
 
 ## 2. 已迁出的后续能力
 
 以下能力不再占用 L0 主规范正文：
 
 ### 2.1 身份与注册治理
-- 在线提交 remote subagent 草案的正式 API
-- subagent registration 审核流、导入流、灰度发布流
+- 在线提交 remote hotline 草案的正式 API
+- hotline registration 审核流、导入流、灰度发布流
 - API key 轮换 / 吊销 / 细粒度审计
-- 卖家公钥轮换与双 key 窗口
+- responder public-key rotation and dual-key windows
 
 ### 2.2 目录与检索
 - `GET /v1/catalog/search`
@@ -56,11 +56,11 @@
 ### 3.1 目标
 
 当前 L0 只覆盖“单次请求 -> ACK -> 单次结果包”的闭环。  
-后续如果要支持 `Buyer Agent` 与 `Remote Subagent` 的多轮次对话，需要把一次调用从“单包任务”升级为“会话（session）”。
+后续如果要支持 `Caller Agent` 与 `Remote Hotline` 的多轮次对话，需要把一次调用从“单包任务”升级为“会话（session）”。
 
 适用场景：
-- Remote Subagent 需要追问补充信息
-- Buyer Agent 需要逐轮澄清要求或验收中间产物
+- Remote Hotline 需要追问补充信息
+- Caller Agent 需要逐轮澄清要求或验收中间产物
 - 任务天然是对话式协作，而不是单次离散执行
 
 ### 3.2 为什么不放进 L0
@@ -85,7 +85,7 @@
 - `session_id`：一次多轮交互的会话标识
 - `turn_id`：当前轮次标识
 - `parent_turn_id`：回复所对应的上一轮
-- `speaker`：`buyer_agent | remote_subagent`
+- `speaker`：`caller_agent | remote_hotline`
 - `message_type`：`message | clarification | partial_result | final_result | error`
 - `expects_reply`：当前轮是否要求对方继续回复
 - `session_status`：`OPEN | WAITING_REMOTE | WAITING_LOCAL | COMPLETED | FAILED | TIMED_OUT`
@@ -101,8 +101,8 @@
 
 不建议每一轮都重新签发独立 task token。  
 更合理的方式是：
-- 会话开始时，由 buyer 申请一次 `session-scoped token`
-- token 绑定 `request_id/session_id/buyer_id/seller_id/subagent_id`
+- 会话开始时，由 caller 申请一次 `session-scoped token`
+- token 绑定 `request_id/session_id/caller_id/responder_id/hotline_id`
 - 每一轮 turn 只携带 `session_id + turn_id`，由卖方基于会话上下文校验
 
 这样可以避免：
@@ -113,8 +113,8 @@
 ### 3.5 推荐的状态机演进
 
 建议在 v0.2+ 才引入以下会话状态：
-- Buyer 侧：`CREATED -> SENT -> ACKED -> WAITING_REMOTE/WAITING_LOCAL -> terminal`
-- Remote Subagent 侧：`RECEIVED -> ACKED -> WAITING_REMOTE/WAITING_LOCAL -> FINALIZING -> terminal`
+- Caller 侧：`CREATED -> SENT -> ACKED -> WAITING_REMOTE/WAITING_LOCAL -> terminal`
+- Remote Hotline 侧：`RECEIVED -> ACKED -> WAITING_REMOTE/WAITING_LOCAL -> FINALIZING -> terminal`
 
 L0 不需要这些状态。
 
@@ -137,7 +137,7 @@ L0 闭环稳定后，当前 monorepo 将拆分为三个独立仓库：
 | 仓库 | 职责 |
 | :--- | :--- |
 | `delegated-execution-protocol` | 协议定义（角色、对象模型、授权、合同、结果验证、版本兼容） |
-| `delegated-execution-client` | 终端用户统一客户端（buyer 主流程、seller 预置与启用、marketplace 接入） |
+| `delegated-execution-client` | 终端用户统一客户端（caller 主流程、responder 预置与启用、marketplace 接入） |
 | `delegated-execution-platform-selfhost` | 平台自部署方案（平台服务、部署配置、运维、监控） |
 
 拆分时机、依赖拓扑、共享包归属、预拆分准备及执行步骤的完整规划见 `design/repo-split-plan.md`。
@@ -146,7 +146,7 @@ L0 闭环稳定后，当前 monorepo 将拆分为三个独立仓库：
 
 在 L0 主规范之外，后续能力建议按以下顺序恢复：
 
-1. `POST /v1/catalog/subagents` 正式 subagent registration API
+1. `POST /v2/hotlines` 正式 hotline registration API
 2. `GET /v1/metrics/summary` 聚合查询
 3. 外部 transport adapter（Email MCP / SMTP API / HTTP Webhook）
 4. 目录快照 / 增量接口
@@ -158,16 +158,16 @@ L0 闭环稳定后，当前 monorepo 将拆分为三个独立仓库：
 建议未来逐步收敛为两层命名：
 
 ### 6.1 协议层
-- Buyer
-- Buyer Agent（Local Agent）
-- Seller
-- Remote Subagent
+- Caller
+- Caller Agent（Local Agent）
+- Responder
+- Remote Hotline
 - Platform
 
 ### 6.2 参考实现层
-- Buyer Controller
-- Seller Controller
-- Seller Runtime Template
+- Caller Controller
+- Responder Controller
+- Responder Runtime Template
 - Transport Adapter
 
 这样可以保持：

@@ -18,7 +18,7 @@ This repository owns the stable cross-repository protocol surface:
 - bundled templates and protocol documentation snapshots
 - compatibility guidance for client and platform implementers
 
-This repository does not own buyer runtime behavior, seller runtime behavior, operator deployment, or application-specific storage implementations.
+This repository does not own caller runtime behavior, responder runtime behavior, operator deployment, or application-specific storage implementations.
 
 ## Publish Target
 

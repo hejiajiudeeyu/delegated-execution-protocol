@@ -1,0 +1,43 @@
+{
+  "hotline_id": "starlight.creative.studio.v1",
+  "responder_id": "responder_starlight",
+  "status": "SUCCEEDED",
+  "result": {
+    "generated_items": [
+      {
+        "attachment_role": "generated_asset_1",
+        "format": "jpeg",
+        "width": 1024,
+        "height": 1024,
+        "seed": 8472910
+      },
+      {
+        "attachment_role": "generated_asset_2",
+        "format": "jpeg",
+        "width": 1024,
+        "height": 1024,
+        "seed": 8472911
+      }
+    ],
+    "metadata": {
+      "generation_time_ms": 14200,
+      "pipeline_stage_count": 5,
+      "model_version": "starlight-v3.2",
+      "style_applied": "product_clean"
+    }
+  },
+  "output_attachments": [
+    {
+      "role": "generated_asset_1",
+      "filename": "render_001.jpg",
+      "mime_type": "image/jpeg",
+      "size_bytes": 284100
+    },
+    {
+      "role": "generated_asset_2",
+      "filename": "render_002.jpg",
+      "mime_type": "image/jpeg",
+      "size_bytes": 291400
+    }
+  ]
+}

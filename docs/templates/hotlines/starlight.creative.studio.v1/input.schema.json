@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "starlight.creative.studio.v1 Input Schema",
+  "description": "Input parameters for Starlight AI Creative Studio. Caller provides a creative prompt and optional style configuration. The core multi-model pipeline, prompt engineering strategy, and style transfer logic run entirely on the Responder side and are never exposed.",
+  "type": "object",
+  "required": ["prompt"],
+  "properties": {
+    "prompt": {
+      "type": "string",
+      "description": "Natural language description of the desired creative output. Can include subject, mood, composition, or narrative direction.",
+      "minLength": 1,
+      "maxLength": 2000
+    },
+    "style_preset": {
+      "type": "string",
+      "description": "Named style preset to apply. Available presets are defined by the Responder's internal style library.",
+      "enum": ["cinematic", "illustration", "product_clean", "editorial", "abstract", "anime", "photorealistic"],
+      "default": "photorealistic"
+    },
+    "output_format": {
+      "type": "string",
+      "description": "Desired output file format.",
+      "enum": ["jpeg", "png", "webp"],
+      "default": "jpeg"
+    },
+    "quantity": {
+      "type": "integer",
+      "description": "Number of output variations to generate. Higher values increase execution time.",
+      "minimum": 1,
+      "maximum": 4,
+      "default": 1
+    },
+    "aspect_ratio": {
+      "type": "string",
+      "description": "Desired output aspect ratio.",
+      "enum": ["1:1", "4:3", "16:9", "9:16", "3:4"],
+      "default": "1:1"
+    },
+    "reference_image_hint": {
+      "type": "string",
+      "description": "Optional role name of the reference image attachment to use as style or composition guidance.",
+      "const": "reference_image"
+    }
+  },
+  "additionalProperties": false
+}

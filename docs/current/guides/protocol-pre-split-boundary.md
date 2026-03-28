@@ -8,14 +8,14 @@
 
 以下内容属于未来 `delegated-execution-protocol` 仓库范围：
 
-- [packages/contracts](/Users/hejiajiudeeyu/Documents/Projects/remote-subagent-protocol/packages/contracts)
-- [docs/current/spec/architecture.md](/Users/hejiajiudeeyu/Documents/Projects/remote-subagent-protocol/docs/current/spec/architecture.md)
-- [docs/current/spec/platform-api-v0.1.md](/Users/hejiajiudeeyu/Documents/Projects/remote-subagent-protocol/docs/current/spec/platform-api-v0.1.md)
-- [docs/current/spec/defaults-v0.1.md](/Users/hejiajiudeeyu/Documents/Projects/remote-subagent-protocol/docs/current/spec/defaults-v0.1.md)
-- [docs/current/spec/remote-subagent-scope.md](/Users/hejiajiudeeyu/Documents/Projects/remote-subagent-protocol/docs/current/spec/remote-subagent-scope.md)
-- [docs/current/guides/integration-playbook.md](/Users/hejiajiudeeyu/Documents/Projects/remote-subagent-protocol/docs/current/guides/integration-playbook.md)
-- [docs/current/diagrams/doc-truth-source-map.md](/Users/hejiajiudeeyu/Documents/Projects/remote-subagent-protocol/docs/current/diagrams/doc-truth-source-map.md)
-- [docs/templates](/Users/hejiajiudeeyu/Documents/Projects/remote-subagent-protocol/docs/templates)
+- [packages/contracts](/Users/hejiajiudeeyu/Documents/Projects/remote-hotline-protocol/packages/contracts)
+- [docs/current/spec/architecture.md](/Users/hejiajiudeeyu/Documents/Projects/remote-hotline-protocol/docs/current/spec/architecture.md)
+- [docs/current/spec/platform-api-v0.1.md](/Users/hejiajiudeeyu/Documents/Projects/remote-hotline-protocol/docs/current/spec/platform-api-v0.1.md)
+- [docs/current/spec/defaults-v0.1.md](/Users/hejiajiudeeyu/Documents/Projects/remote-hotline-protocol/docs/current/spec/defaults-v0.1.md)
+- [docs/current/spec/remote-hotline-scope.md](/Users/hejiajiudeeyu/Documents/Projects/remote-hotline-protocol/docs/current/spec/remote-hotline-scope.md)
+- [docs/current/guides/integration-playbook.md](/Users/hejiajiudeeyu/Documents/Projects/remote-hotline-protocol/docs/current/guides/integration-playbook.md)
+- [docs/current/diagrams/doc-truth-source-map.md](/Users/hejiajiudeeyu/Documents/Projects/remote-hotline-protocol/docs/current/diagrams/doc-truth-source-map.md)
+- [docs/templates](/Users/hejiajiudeeyu/Documents/Projects/remote-hotline-protocol/docs/templates)
 
 ## 未来三仓归属
 
@@ -26,12 +26,12 @@
 
 未来客户端仓：
 
-- `packages/buyer-controller-core`
-- `packages/seller-runtime-core`
+- `packages/caller-controller-core`
+- `packages/responder-runtime-core`
 - `packages/sqlite-store`
 - `packages/transports` 中客户端侧适配器
-- `apps/buyer-controller`
-- `apps/seller-controller`
+- `apps/caller-controller`
+- `apps/responder-controller`
 - `apps/ops`
 - `apps/ops-console`
 
@@ -55,7 +55,7 @@
 
 以下内容保留在未来 client / platform 仓库，不应倒灌回协议侧：
 
-- buyer / seller / ops / relay / platform 的运行时代码
+- caller / responder / ops / relay / platform 的运行时代码
 - SQLite / PostgreSQL 存储实现
 - compose、镜像、部署和 operator 运维流程
 - 只描述当前实现细节的产品文档
@@ -67,7 +67,7 @@
 - `@delexec/contracts` 中的错误码注册表与默认 retry 语义
 - `@delexec/contracts` 中的请求状态枚举
 - `@delexec/contracts` 中的结果签名 canonicalization 规则
-- `docs/templates` 中的 catalog 模板、subagent 模板与 JSON Schema
+- `docs/templates` 中的 catalog 模板、hotline 模板与 JSON Schema
 - 协议规范文档中的对象模型、签名字段和验证顺序
 
 ## 发布产物策略
@@ -81,7 +81,7 @@
 
 已固定的模板发布形式：
 
-- 模板源仍由 [docs/templates](/Users/hejiajiudeeyu/Documents/Projects/remote-subagent-protocol/docs/templates) 维护。
+- 模板源仍由 [docs/templates](/Users/hejiajiudeeyu/Documents/Projects/remote-hotline-protocol/docs/templates) 维护。
 - `@delexec/contracts` 在 `npm pack` / publish 时会携带 `templates/` 和 `templates/manifest.json`。
 - 下游实现应通过 `@delexec/contracts` 导出的路径 helper 或 manifest 消费这些模板。
 

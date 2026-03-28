@@ -44,8 +44,8 @@ The source of truth remains the repository documentation and template directorie
 
 This package intentionally excludes implementation-side runtime code:
 
-- buyer runtime and controllers
-- seller runtime and controllers
+- caller runtime and controllers
+- responder runtime and controllers
 - platform API and consoles
 - transport relay implementation
 - storage adapters

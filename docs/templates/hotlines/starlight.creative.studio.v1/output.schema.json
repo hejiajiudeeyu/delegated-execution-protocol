@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "starlight.creative.studio.v1 Output Schema",
+  "description": "Output from Starlight AI Creative Studio. Returns metadata describing the generated assets (actual image files are returned as attachments). The generation pipeline internals, model versions, and prompt augmentation details are included for debugging but do not reveal the Responder's core logic.",
+  "type": "object",
+  "required": ["generated_items", "metadata"],
+  "properties": {
+    "generated_items": {
+      "type": "array",
+      "description": "List of generated creative assets. Each item corresponds to a file in the output attachments.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["attachment_role", "format", "width", "height"],
+        "properties": {
+          "attachment_role": {
+            "type": "string",
+            "description": "The role name of the corresponding attachment file (e.g. 'generated_asset_1')."
+          },
+          "format": {
+            "type": "string",
+            "description": "File format of the generated asset.",
+            "enum": ["jpeg", "png", "webp"]
+          },
+          "width": {
+            "type": "integer",
+            "description": "Width of the generated image in pixels."
+          },
+          "height": {
+            "type": "integer",
+            "description": "Height of the generated image in pixels."
+          },
+          "seed": {
+            "type": "integer",
+            "description": "Random seed used for this generation. Useful for reproducibility requests."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["generation_time_ms"],
+      "description": "Generation metadata for debugging and auditing.",
+      "properties": {
+        "generation_time_ms": {
+          "type": "integer",
+          "description": "Total server-side generation time in milliseconds."
+        },
+        "pipeline_stage_count": {
+          "type": "integer",
+          "description": "Number of pipeline stages executed. Does not reveal stage details."
+        },
+        "model_version": {
+          "type": "string",
+          "description": "Internal model version tag used for this generation."
+        },
+        "style_applied": {
+          "type": "string",
+          "description": "The resolved style preset that was applied."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

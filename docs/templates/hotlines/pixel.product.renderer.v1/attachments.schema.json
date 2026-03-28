@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "pixel.product.renderer.v1 Attachments Schema",
+  "description": "File attachment declarations for Pixel Product Renderer. A product photo is required as input. All rendered output images are returned as output attachments.",
+  "input_attachments": {
+    "accepts_files": true,
+    "max_files": 1,
+    "max_total_size_bytes": 15728640,
+    "accepted_mime_types": ["image/jpeg", "image/png", "image/webp"],
+    "file_roles": [
+      {
+        "role": "product_photo",
+        "required": true,
+        "description": "The source product photograph. The Responder performs background removal, segmentation, and feeds it into the rendering pipeline internally. The source image is not stored after processing.",
+        "accepted_types": ["image/jpeg", "image/png", "image/webp"],
+        "max_size_bytes": 15728640
+      }
+    ]
+  },
+  "output_attachments": {
+    "includes_files": true,
+    "max_files": 4,
+    "max_total_size_bytes": 52428800,
+    "possible_mime_types": ["image/jpeg", "image/png", "image/webp"],
+    "file_roles": [
+      {
+        "role": "rendered_image_1",
+        "guaranteed": true,
+        "description": "First rendered product image. Always present when quantity >= 1.",
+        "possible_types": ["image/jpeg", "image/png", "image/webp"]
+      },
+      {
+        "role": "rendered_image_2",
+        "guaranteed": false,
+        "description": "Second rendered product image. Present when quantity >= 2.",
+        "possible_types": ["image/jpeg", "image/png", "image/webp"]
+      },
+      {
+        "role": "rendered_image_3",
+        "guaranteed": false,
+        "description": "Third rendered product image. Present when quantity >= 3.",
+        "possible_types": ["image/jpeg", "image/png", "image/webp"]
+      },
+      {
+        "role": "rendered_image_4",
+        "guaranteed": false,
+        "description": "Fourth rendered product image. Present when quantity = 4.",
+        "possible_types": ["image/jpeg", "image/png", "image/webp"]
+      }
+    ]
+  }
+}

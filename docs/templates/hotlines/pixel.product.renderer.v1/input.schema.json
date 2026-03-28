@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "pixel.product.renderer.v1 Input Schema",
+  "description": "Input parameters for Pixel Product Renderer. Caller provides a product description and optional rendering configuration. A product photo attachment is required. The fine-tuned rendering model, brand style pipeline, background synthesis algorithms, and post-processing chain all run on the Responder side and are never exposed.",
+  "type": "object",
+  "required": ["product_description"],
+  "properties": {
+    "product_description": {
+      "type": "string",
+      "description": "A description of the product to render, including material, color, key features, and any specific rendering requirements.",
+      "minLength": 10,
+      "maxLength": 1500
+    },
+    "background_style": {
+      "type": "string",
+      "description": "The background environment style for the rendered output.",
+      "enum": ["pure_white", "gradient_soft", "lifestyle_studio", "outdoor_natural", "dark_premium", "transparent"],
+      "default": "pure_white"
+    },
+    "angle": {
+      "type": "string",
+      "description": "Desired primary camera angle for the render.",
+      "enum": ["front", "three_quarter", "top_down", "side", "hero_45"],
+      "default": "three_quarter"
+    },
+    "resolution": {
+      "type": "string",
+      "description": "Output resolution preset.",
+      "enum": ["1024x1024", "1500x1500", "2048x2048", "1080x1350"],
+      "default": "1500x1500"
+    },
+    "quantity": {
+      "type": "integer",
+      "description": "Number of rendered variations to generate. Each variation may use a slightly different angle, lighting, or framing within the specified style.",
+      "minimum": 1,
+      "maximum": 4,
+      "default": 1
+    }
+  },
+  "additionalProperties": false
+}

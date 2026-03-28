@@ -33,8 +33,8 @@ Tests
 - `npm run test:e2e:ui`（Vitest Web UI）
 - `npm 运行测试：部署：配置`
 - `npm 运行测试：烟雾：平台`
-- `npm 运行测试：烟雾：买家`
-- `npm 运行测试：烟雾：卖家`
+- `npm 运行测试：烟雾：Caller`
+- `npm 运行测试：烟雾：Responder`
 - `npm 运行测试：compose-smoke`
 - `npm 运行测试：public-stack-smoke`
 - `npm 运行测试：本地图像烟雾`

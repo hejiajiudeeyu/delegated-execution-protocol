@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "atlas.knowledge.qa.v1 Attachments Schema",
+  "description": "File attachment declarations for Atlas Enterprise Knowledge QA. This hotline is text-only: no file attachments are accepted on input and none are returned in output. All knowledge retrieval is handled internally by the Responder's private knowledge base.",
+  "input_attachments": {
+    "accepts_files": false
+  },
+  "output_attachments": {
+    "includes_files": false
+  }
+}

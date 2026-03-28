@@ -6,7 +6,7 @@ The repository is still a monorepo, but pre-split release validation now has a d
 
 ## Goals
 
-- produce versioned container images for `platform`, `buyer`, `seller`, and `relay`
+- produce versioned container images for `platform`, `caller`, `responder`, and `relay`
 - produce a release-shaped protocol package for `@delexec/contracts`
 - validate both source-build compose paths and image-based compose paths
 - validate that protocol templates/docs can be consumed from a packed artifact instead of a monorepo-relative path
@@ -36,9 +36,9 @@ Recommended tags:
 
 1. cut a version tag such as `v0.1.0`
 2. run the protocol package check and confirm `@delexec/contracts` still packs, installs, and exposes bundled templates/docs
-3. run the packaged-service check and confirm `platform` / `buyer` / `seller` / `relay` tarballs still install and boot in a clean room
+3. run the packaged-service check and confirm `platform` / `caller` / `responder` / `relay` tarballs still install and boot in a clean room
 4. run the packaged-e2e check and confirm the full e2e suite still passes with installed tarball commands injected through `E2E_*_CMD`
-5. let the `Images` workflow publish `rsp-platform`, `rsp-buyer`, `rsp-seller`, and `rsp-relay`
+5. let the `Images` workflow publish `rsp-platform`, `rsp-caller`, `rsp-responder`, and `rsp-relay`
 6. ensure `docs/archive/releases/vX.Y.Z.md` exists and `docs/archive/releases/compatibility-matrix.md` includes the tag
 7. verify the matching `Published Images Smoke` workflow passed against GHCR
 8. update any external deployment environment to the released `IMAGE_TAG`
@@ -53,7 +53,7 @@ Recommended tags:
 - `service_runtime_failed`: containers started but entered `unhealthy/exited/restarting`
 - `health_check_timeout`: services did not become healthy in time
 - `postgres_crud_check_failed`: database booted but failed basic CRUD
-- `register_failed` / `catalog_failed` / `buyer_remote_request_failed` / `ack_not_ready` / `buyer_result_not_ready`: business-path regression
+- `register_failed` / `catalog_failed` / `caller_remote_request_failed` / `ack_not_ready` / `caller_result_not_ready`: business-path regression
 
 ## Compatibility Note
 

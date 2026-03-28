@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "starlight.creative.studio.v1 Attachments Schema",
+  "description": "File attachment declarations for Starlight AI Creative Studio. Caller may optionally provide a reference image for style or composition guidance. Generated assets are always returned as output attachments.",
+  "input_attachments": {
+    "accepts_files": true,
+    "max_files": 1,
+    "max_total_size_bytes": 10485760,
+    "accepted_mime_types": ["image/jpeg", "image/png", "image/webp"],
+    "file_roles": [
+      {
+        "role": "reference_image",
+        "required": false,
+        "description": "Optional reference image for style or composition guidance. The Responder uses this as a soft signal — not as direct conditioning input. The image is processed privately and not stored.",
+        "accepted_types": ["image/jpeg", "image/png", "image/webp"],
+        "max_size_bytes": 10485760
+      }
+    ]
+  },
+  "output_attachments": {
+    "includes_files": true,
+    "max_files": 4,
+    "max_total_size_bytes": 52428800,
+    "possible_mime_types": ["image/jpeg", "image/png", "image/webp"],
+    "file_roles": [
+      {
+        "role": "generated_asset_1",
+        "guaranteed": true,
+        "description": "First generated creative asset. Always present when quantity >= 1.",
+        "possible_types": ["image/jpeg", "image/png", "image/webp"]
+      },
+      {
+        "role": "generated_asset_2",
+        "guaranteed": false,
+        "description": "Second generated creative asset. Present when quantity >= 2.",
+        "possible_types": ["image/jpeg", "image/png", "image/webp"]
+      },
+      {
+        "role": "generated_asset_3",
+        "guaranteed": false,
+        "description": "Third generated creative asset. Present when quantity >= 3.",
+        "possible_types": ["image/jpeg", "image/png", "image/webp"]
+      },
+      {
+        "role": "generated_asset_4",
+        "guaranteed": false,
+        "description": "Fourth generated creative asset. Present when quantity = 4.",
+        "possible_types": ["image/jpeg", "image/png", "image/webp"]
+      }
+    ]
+  }
+}

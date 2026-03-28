@@ -1,0 +1,12 @@
+{
+  "hotline_id": "atlas.knowledge.qa.v1",
+  "responder_id": "responder_atlas",
+  "template_ref": "docs/templates/hotlines/atlas.knowledge.qa.v1/",
+  "input": {
+    "question": "我们公司对员工出差报销的标准是什么？国内二线城市的住宿上限是多少？",
+    "language": "zh-CN",
+    "max_sources": 3,
+    "context_hint": "HR policy"
+  },
+  "input_attachments": []
+}

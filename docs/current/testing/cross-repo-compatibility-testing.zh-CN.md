@@ -17,12 +17,12 @@
 
 ## 当前 e2e 启动模型
 
-当前 [tests/e2e](/Users/hejiajiudeeyu/Documents/Projects/remote-subagent-protocol/tests/e2e) 已改成独立进程启动：
+当前 [tests/e2e](/Users/hejiajiudeeyu/Documents/Projects/remote-hotline-protocol/tests/e2e) 已改成独立进程启动：
 
 - 平台
 - 继电器
-- 买家
-- 卖家
+- Caller
+- Responder
 - 运营主管
 
 默认情况下，测试会退到当前仓库内的源码入口。
@@ -36,7 +36,7 @@
 
 此处检查会：
 
-- `npm pack` 平台/买家/卖家/中继
+- `npm pack` 平台/Caller/Responder/中继
 - 在空目录安装 tarball
 - 直接启动各自的bin
 - 验证`/healthz`
@@ -58,8 +58,8 @@
 
 - `平台`
 - `中继`
-- `买家`
-- `卖家`
+- `Caller`
+- `Responder`
 - `OPS_SUPERVISOR`
 
 `*_ARGS` 既可以是 JSON 存储，也可以是空格分隔字符串。
@@ -70,8 +70,8 @@
 E2E_PLATFORM_CMD=delexec-platform-api
 E2E_PLATFORM_ARGS='[]'
 E2E_RELAY_CMD=delexec-relay
-E2E_BUYER_CMD=delexec-buyer-controller
-E2E_SELLER_CMD=delexec-seller-controller
+E2E_CALLER_CMD=delexec-caller-controller
+E2E_RESPONDER_CMD=delexec-responder-controller
 E2E_OPS_SUPERVISOR_CMD=delexec-ops
 E2E_OPS_SUPERVISOR_ARGS='["start"]'
 npm run test:e2e
@@ -95,6 +95,6 @@ npm run test:e2e
 
 ## 当前限制
 
-- 目前还没有把 `platform` / `buyer` / `seller` 赋为 clean-room 可独立 npm 安装的公开分发物
+- 目前还没有把 `platform` / `caller` / `responder` 赋为 clean-room 可独立 npm 安装的公开分发物
 - 因此 `E2E_*_CMD` 的主要用途还是为本地 tarball、临时安装目录、外部包装脚本留接口
 - 真正的“发布包优先”要等客户端/平台仓的分发闭环完成后再切为默认模式
