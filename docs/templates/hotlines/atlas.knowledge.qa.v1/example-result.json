@@ -1,8 +1,10 @@
 {
-  "hotline_id": "atlas.knowledge.qa.v1",
+  "request_id": "018f9d6a-1bb2-7cc1-b4a4-2b9e0e9b3f52",
+  "result_version": "0.1.0",
   "responder_id": "responder_atlas",
-  "status": "SUCCEEDED",
-  "result": {
+  "hotline_id": "atlas.knowledge.qa.v1",
+  "status": "ok",
+  "output": {
     "answer": "根据公司差旅管理规定（2024年修订版），国内二线城市的住宿报销上限为每晚 450 元人民币（税后）。若实际住宿费用超过此标准，需事先获得直属主管和财务部门的书面审批。差旅补贴（餐费和市内交通）按每日 150 元计算，凭票据实报实销，封顶 200 元/天。具体城市分级请参见附件《差旅城市等级划分表》最新版本。",
     "confidence": 0.92,
     "sources": [
@@ -27,5 +29,14 @@
       "一线城市的住宿报销标准是多少？"
     ],
     "retrieval_coverage": "full"
-  }
+  },
+  "timing": {
+    "accepted_at": "2026-03-02T09:00:01Z",
+    "finished_at": "2026-03-02T09:00:03Z",
+    "elapsed_ms": 2100
+  },
+  "human_summary": "知识库检索完成：找到关于差旅住宿标准的答案，置信度 0.92，引用 3 条来源",
+  "signature_algorithm": "Ed25519",
+  "signer_public_key_pem": "-----BEGIN PUBLIC KEY-----\nREPLACE_ATLAS\n-----END PUBLIC KEY-----",
+  "signature_base64": "responder_sig_v1_base64_placeholder"
 }

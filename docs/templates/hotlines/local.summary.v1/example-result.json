@@ -1,11 +1,23 @@
 {
+  "request_id": "018f9d7b-5cc1-8aa2-c5b5-3c0f1f0c4a63",
+  "result_version": "0.1.0",
+  "responder_id": "responder_local",
+  "hotline_id": "local.summary.v1",
   "status": "ok",
   "output": {
     "summary": "Summarize this local example request."
   },
-  "schema_valid": true,
+  "timing": {
+    "accepted_at": "2026-03-02T10:00:00Z",
+    "finished_at": "2026-03-02T10:00:01Z",
+    "elapsed_ms": 320
+  },
+  "human_summary": "文本摘要完成",
   "usage": {
     "tokens_in": 1,
     "tokens_out": 1
-  }
+  },
+  "signature_algorithm": "Ed25519",
+  "signer_public_key_pem": "-----BEGIN PUBLIC KEY-----\nREPLACE_LOCAL\n-----END PUBLIC KEY-----",
+  "signature_base64": "responder_sig_v1_base64_placeholder"
 }

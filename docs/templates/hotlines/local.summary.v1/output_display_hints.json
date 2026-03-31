@@ -1,0 +1,11 @@
+{
+  "$schema": "https://delegated-execution.dev/schemas/output-display-hints/v1",
+  "primary_field": "summary",
+  "field_display_order": ["summary"],
+  "field_labels": {
+    "summary": "摘要内容"
+  },
+  "field_descriptions": {
+    "summary": "对输入文本的精简概括"
+  }
+}

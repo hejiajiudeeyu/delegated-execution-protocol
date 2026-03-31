@@ -1,0 +1,13 @@
+{
+  "$schema": "https://delegated-execution.dev/schemas/output-display-hints/v1",
+  "primary_field": "generated_items",
+  "field_display_order": ["generated_items", "metadata"],
+  "field_labels": {
+    "generated_items": "生成素材",
+    "metadata": "生成元数据"
+  },
+  "field_descriptions": {
+    "generated_items": "生成的创意图片列表，每项对应一个输出附件文件",
+    "metadata": "生成耗时、流水线阶段数、模型版本、应用风格等元数据"
+  }
+}

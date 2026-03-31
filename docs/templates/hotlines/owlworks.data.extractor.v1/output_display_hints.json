@@ -1,0 +1,13 @@
+{
+  "$schema": "https://delegated-execution.dev/schemas/output-display-hints/v1",
+  "primary_field": "records",
+  "field_display_order": ["records", "metadata"],
+  "field_labels": {
+    "records": "提取记录",
+    "metadata": "提取元数据"
+  },
+  "field_descriptions": {
+    "records": "从目标页面提取的数据记录列表，每条记录为键值对",
+    "metadata": "本次提取的来源 URL、爬取页数、记录总数等统计信息"
+  }
+}

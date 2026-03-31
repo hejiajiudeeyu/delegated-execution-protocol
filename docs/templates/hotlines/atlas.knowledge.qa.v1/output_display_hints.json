@@ -1,0 +1,19 @@
+{
+  "$schema": "https://delegated-execution.dev/schemas/output-display-hints/v1",
+  "primary_field": "answer",
+  "field_display_order": ["answer", "confidence", "retrieval_coverage", "sources", "follow_up_questions"],
+  "field_labels": {
+    "answer": "回答",
+    "confidence": "置信度",
+    "sources": "参考来源",
+    "follow_up_questions": "建议追问",
+    "retrieval_coverage": "知识库覆盖度"
+  },
+  "field_descriptions": {
+    "answer": "基于知识库检索生成的回答",
+    "confidence": "答案置信度评分（0.0 - 1.0，低于 0.6 表示知识库覆盖不足）",
+    "sources": "支撑答案的来源文档列表",
+    "follow_up_questions": "Responder 建议的后续追问",
+    "retrieval_coverage": "知识库对此问题的覆盖评估：full / partial / none"
+  }
+}

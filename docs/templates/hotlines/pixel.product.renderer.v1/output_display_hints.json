@@ -1,0 +1,13 @@
+{
+  "$schema": "https://delegated-execution.dev/schemas/output-display-hints/v1",
+  "primary_field": "renders",
+  "field_display_order": ["renders", "metadata"],
+  "field_labels": {
+    "renders": "渲染结果",
+    "metadata": "渲染元数据"
+  },
+  "field_descriptions": {
+    "renders": "生成的产品图片列表，每项对应一个输出附件文件",
+    "metadata": "渲染耗时、模型版本、背景处理等元数据"
+  }
+}

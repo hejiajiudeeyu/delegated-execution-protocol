@@ -249,8 +249,9 @@ v0.1 映射约束（冻结）：
 - `status`（当前 wire-level 实现）：`ok | error`
 - `output`：成功结果（需满足 `output_schema`）
 - `error`：失败时提供 `code`、`message`、`retryable`
-- `timing`：`accepted_at`、`finished_at`、`elapsed_ms`
-- `usage`（可选）：实现自定义资源统计
+- `timing`（必须）：`accepted_at`、`finished_at`、`elapsed_ms`。Responder 必须提供，Caller 可用于 SLA 监控、超时判断与 UI 展示。
+- `usage`（可选）：实现自定义资源统计，如 `tokens_in`、`tokens_out`、`pages_processed` 等。
+- `human_summary`（可选）：一行人类可读的结果摘要，用于审计日志预览、通知推送与 UI 卡片标题，不得包含敏感输出内容。
 - `signature_algorithm`、`signature_base64`：Responder 签名字段（防伪与去重）
 
 说明：
@@ -258,6 +259,7 @@ v0.1 映射约束（冻结）：
 - Caller Controller 在验签与 schema 校验后，再把本地请求状态归一化为 `SUCCEEDED | FAILED | UNVERIFIED | TIMED_OUT`
 - 因此 `ok|error` 是传输层结果语义，`SUCCEEDED|FAILED|...` 是 Caller 本地状态机语义
 - 结果包可携带 `signer_public_key_pem` 作为调试信息，但 Caller 的信任根必须来自目录或 `delivery-meta` 预绑定公钥。
+- `timing.elapsed_ms` 为 Responder 侧处理耗时（毫秒），必须提供；`accepted_at` 与 `finished_at` 为 ISO 8601 时间戳，推荐提供。
 
 示例：
 ```json
@@ -276,6 +278,7 @@ v0.1 映射约束（冻结）：
     "finished_at": "2026-03-02T11:20:21Z",
     "elapsed_ms": 3100
   },
+  "human_summary": "文本分类完成：识别为 refund_request，置信度 0.94",
   "signature_algorithm": "Ed25519",
   "signature_base64": "responder_sig_v1_base64_placeholder"
 }
@@ -309,12 +312,13 @@ v0.1 映射约束（冻结）：
 
 ```
 docs/templates/hotlines/{hotline_id}/
-├── input.schema.json        # 输入 JSON Schema，定义 task.input 字段
-├── output.schema.json       # 输出 JSON Schema，定义 task.output 字段
-├── attachments.schema.json  # 文件附件声明（可选，仅涉及文件输入/输出时需要）
-├── example-contract.json    # 完整合约示例
-├── example-result.json      # 完整结果包示例
-└── README.md                # 能力说明、标签集、约束、快速开始
+├── input.schema.json           # 输入 JSON Schema，定义 task.input 字段
+├── output.schema.json          # 输出 JSON Schema，定义 task.output 字段
+├── output_display_hints.json   # UI 渲染指引（可选）：字段中文标签、主要字段、展示顺序
+├── attachments.schema.json     # 文件附件声明（可选，仅涉及文件输入/输出时需要）
+├── example-contract.json       # 完整合约示例
+├── example-result.json         # 完整结果包示例（须符合 §4.2 wire-level 格式）
+└── README.md                   # 能力说明、标签集、约束、快速开始
 ```
 
 ### 目录关联

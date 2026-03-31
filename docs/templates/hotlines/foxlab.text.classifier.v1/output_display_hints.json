@@ -1,0 +1,15 @@
+{
+  "$schema": "https://delegated-execution.dev/schemas/output-display-hints/v1",
+  "primary_field": "label",
+  "field_display_order": ["label", "confidence", "secondary_labels"],
+  "field_labels": {
+    "label": "分类标签",
+    "confidence": "置信度",
+    "secondary_labels": "备选标签"
+  },
+  "field_descriptions": {
+    "label": "模型预测的意图分类（如 refund_request、shipping_inquiry 等）",
+    "confidence": "主分类的置信度评分（0.0 - 1.0）",
+    "secondary_labels": "其他候选分类及其评分"
+  }
+}

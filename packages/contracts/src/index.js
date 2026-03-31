@@ -212,7 +212,8 @@ export function canonicalizeResultPackageForSignature(result = {}) {
     'artifacts',
     'error',
     'timing',
-    'usage'
+    'usage',
+    'human_summary'
   ]) {
     if (key in result) {
       canonical[key] = result[key];
@@ -220,6 +221,43 @@ export function canonicalizeResultPackageForSignature(result = {}) {
   }
 
   return canonical;
+}
+
+/**
+ * Validate a wire-level result package against the protocol §4.2 requirements.
+ * Returns { valid: boolean, errors: string[] }.
+ */
+export function validateResultPackage(pkg) {
+  if (!pkg || typeof pkg !== 'object') {
+    return { valid: false, errors: ['result package must be an object'] };
+  }
+  const errors = [];
+  if (!pkg.request_id) errors.push('missing request_id');
+  if (!pkg.responder_id) errors.push('missing responder_id');
+  if (!pkg.hotline_id) errors.push('missing hotline_id');
+  if (!['ok', 'error'].includes(pkg.status)) {
+    errors.push('status must be "ok" or "error"');
+  }
+  if (pkg.status === 'ok' && !pkg.output) {
+    errors.push('status=ok requires output');
+  }
+  if (pkg.status === 'error') {
+    if (!pkg.error || typeof pkg.error !== 'object') {
+      errors.push('status=error requires error object');
+    } else {
+      if (!pkg.error.code) errors.push('error.code is required');
+      if (!pkg.error.message) errors.push('error.message is required');
+      if (pkg.error.retryable === undefined || pkg.error.retryable === null) {
+        errors.push('error.retryable is required');
+      }
+    }
+  }
+  if (!pkg.timing || typeof pkg.timing !== 'object') {
+    errors.push('timing is required');
+  } else if (pkg.timing.elapsed_ms === undefined || pkg.timing.elapsed_ms === null) {
+    errors.push('timing.elapsed_ms is required');
+  }
+  return { valid: errors.length === 0, errors };
 }
 
 export function getBundledTemplatesRoot() {
