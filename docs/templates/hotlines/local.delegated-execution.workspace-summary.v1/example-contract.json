@@ -1,11 +1,12 @@
 {
   "request_id": "req_local_summary_example_1",
   "responder_id": "responder_local_demo",
-  "hotline_id": "local.summary.v1",
+  "hotline_id": "local.delegated-execution.workspace-summary.v1",
   "task": {
     "task_type": "text_summarize",
     "input": {
-      "text": "Summarize this local example request."
+      "text": "CHG-2026-003 is in progress. The local onboarding flow is now stable, and platform publishing remains a later optional step.",
+      "instruction": "Summarize the current progress in 2-3 sentences and mention the next step."
     },
     "output_schema": {
       "type": "object",
@@ -13,7 +14,8 @@
       "required": ["summary"],
       "properties": {
         "summary": {
-          "type": "string"
+          "type": "string",
+          "description": "The concise workspace summary returned to the Caller."
         }
       }
     }

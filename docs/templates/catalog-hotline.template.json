@@ -2,7 +2,7 @@
   "hotline_id": "responder_namespace.capability.variant.v1",
   "responder_id": "responder_example",
   "display_name": "Example Hotline",
-  "description": "Short description of what this hotline does.",
+  "description": "Caller-facing guidance for when this hotline should be chosen.",
   "capabilities": [
     "classification"
   ],

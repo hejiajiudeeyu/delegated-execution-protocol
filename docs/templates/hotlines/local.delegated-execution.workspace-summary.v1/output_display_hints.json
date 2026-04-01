@@ -6,6 +6,6 @@
     "summary": "摘要内容"
   },
   "field_descriptions": {
-    "summary": "对输入文本的精简概括"
+    "summary": "对工作区文本、进度更新或变更说明的简洁摘要"
   }
 }

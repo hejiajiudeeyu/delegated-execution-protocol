@@ -2,17 +2,17 @@
   "request_id": "018f9d7b-5cc1-8aa2-c5b5-3c0f1f0c4a63",
   "result_version": "0.1.0",
   "responder_id": "responder_local",
-  "hotline_id": "local.summary.v1",
+  "hotline_id": "local.delegated-execution.workspace-summary.v1",
   "status": "ok",
   "output": {
-    "summary": "Summarize this local example request."
+    "summary": "The local onboarding flow is now stable and supports caller registration, responder enablement, draft review, and local self-call without platform bootstrap. The next step is refining local hotline management before expanding platform and community publishing."
   },
   "timing": {
     "accepted_at": "2026-03-02T10:00:00Z",
     "finished_at": "2026-03-02T10:00:01Z",
     "elapsed_ms": 320
   },
-  "human_summary": "文本摘要完成",
+  "human_summary": "工作区状态摘要已生成",
   "usage": {
     "tokens_in": 1,
     "tokens_out": 1

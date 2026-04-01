@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["text"],
+  "properties": {
+    "text": {
+      "type": "string",
+      "description": "Paste the project notes, status update, or workspace text that you want summarized. Include enough surrounding context for the summary to be useful.",
+      "minLength": 1
+    },
+    "instruction": {
+      "type": "string",
+      "description": "Optionally tell the hotline what to emphasize, such as next steps, blockers, risks, or action items."
+    }
+  }
+}

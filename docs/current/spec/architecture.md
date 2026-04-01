@@ -337,6 +337,17 @@ docs/templates/hotlines/{hotline_id}/
 3. **构造合约**：Caller 参照 `input.schema.json` 填写 `task.input`；若存在 `input_attachments`，按声明的 `file_roles` 准备附件；用 `output.schema.json` 设定 `task.output_schema`。
 4. **参考示例**：`example-contract.json`、`example-result.json`、`input_examples[]`、`output_examples[]` 提供端到端样本。
 
+### Caller-facing field semantics
+
+- Hotline-level `description` and `summary` should help the Caller decide **whether this hotline should be chosen for the current task**.
+- `input_summary` is an overall preparation note shown before filling the form; it does not replace per-field guidance.
+- For every user-fillable input field, `input_schema.properties.<field>.description` should be written as **Caller-facing fill guidance**:
+  - what the Caller should put in the field
+  - when the field should be filled
+  - what kind of detail is useful
+- For output fields, `output_schema.properties.<field>.description` should explain **what the returned field means**, not how to fill it.
+- A hotline template should avoid internal responder-only wording in input field descriptions.
+
 ### 文件附件声明（input_attachments / output_attachments）
 
 对于支持文件输入/输出的 hotline，`attachments.schema.json` 定义混合模式的完整声明。输入侧与输出侧采用对称设计：
@@ -449,6 +460,10 @@ Caller 在解析结果时，`output.report_ref` 值 `"result_report"` 即对应 
 | `output_examples[]` | 可选 | 多个输出示例，每项含 `title`、`result`（JSON）、`attachments`（文件引用） |
 | `readme_markdown` | 可选 | 完整使用文档（Markdown） |
 | `template_version` | 可选 | 模板版本号 |
+
+约束补充：
+- 若 `input_schema.properties` 非空，则每个可填写字段都应提供非空 `description`。
+- 这些 `description` 应被视为 Caller / Caller Agent 的逐字段填写说明。
 
 ### 模板维护规范
 - 模板文件由 Responder 维护，通过 PR 提交更新。

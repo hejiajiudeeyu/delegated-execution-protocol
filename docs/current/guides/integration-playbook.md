@@ -57,6 +57,8 @@
   - `output_schema`：了解将获得的输出格式
   - `example_contract` / `example_result`：若服务端提供，则可作为参考样例
   - `readme_markdown`：若服务端提供，则用于补充能力说明
+- 对输入字段，优先把 `input_schema.properties.<field>.description` 解释为逐字段填写说明，而不是面向 Responder 的内部注释。
+- 对输出字段，`output_schema.properties.<field>.description` 应按结果字段含义理解。
 - Caller Agent 可据此自动构造合约中的 `task.input` 和 `task.output_schema`。
 - 可选：使用 `If-None-Match` + `ETag` 做模板缓存与增量刷新。
 

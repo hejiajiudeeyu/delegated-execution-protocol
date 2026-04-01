@@ -337,11 +337,26 @@ docs/templates/hotlines/{hotline_id}/
 3. **构造契约**：Caller参照 `input.schema.json` 填写 `task.input`，用 `output.schema.json` 设置 `task.output_schema`。
 4. **参考示例**：`example-contract.json` 和 `example-result.json` 提供最终的请求响应样本。
 
+### 面向 Caller 的字段语义
+
+- hotline 级别的 `description` 与 `summary` 应帮助 Caller 判断 **什么时候该选择这条热线**。
+- `input_summary` 是填写前的总提示，不能替代逐字段说明。
+- 对每一个可填写输入字段，`input_schema.properties.<field>.description` 都应写成 **面向 Caller 的填写说明**：
+  - 该字段应填写什么
+  - 在什么情况下填写
+  - 哪些细节有助于提高结果质量
+- 对输出字段，`output_schema.properties.<field>.description` 应说明 **返回字段的含义**，而不是填写方法。
+- 输入字段说明不应使用仅面向 Responder 内部实现的表述。
+
 ### 模板维护规范
 - 模板文件由Responder维护，通过PR提交更新。
 - Schema变更遵循一致性策略版本（§3.2）：仅允许逻辑兼容新增字段。
 - 平台在合并模板 PR 后自动更新目录的 `updated_at` 计时器。
 - MVP阶段模板仍存储在Git仓库中，但对Caller通过平台API下发统一，不暴露仓库直读依赖。
+
+补充约束：
+- 若 `input_schema.properties` 非空，则每个可填写字段都应提供非空 `description`。
+- 这些 `description` 应被视为 Caller / Caller Agent 的逐字段填写说明。
 
 ## 5. Token与签名模型
 

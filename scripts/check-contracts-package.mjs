@@ -50,12 +50,12 @@ async function main() {
       }
 
       const manifest = loadBundledTemplateManifest();
-      const inputSchemaPath = resolveBundledTemplatePath("hotlines/local.summary.v1/input.schema.json");
+      const inputSchemaPath = resolveBundledTemplatePath("hotlines/local.delegated-execution.workspace-summary.v1/input.schema.json");
       if (!fs.existsSync(inputSchemaPath)) {
         throw new Error("contracts_template_input_schema_missing");
       }
-      if (!manifest.hotlines.some((entry) => entry.hotline_id === "local.summary.v1")) {
-        throw new Error("contracts_template_manifest_missing_local_summary");
+      if (!manifest.hotlines.some((entry) => entry.hotline_id === "local.delegated-execution.workspace-summary.v1")) {
+        throw new Error("contracts_template_manifest_missing_workspace_summary");
       }
       if (!fs.existsSync(getBundledTemplatesRoot())) {
         throw new Error("contracts_templates_root_missing");

@@ -62,6 +62,8 @@ Integration Playbook v0.1（Caller/Responder/平台）
   - `output_schema`：了解将获得的输出格式
   - `example_contract` / `example_result`：若服务端提供，则可参考样例
   - `readme_markdown`：若服务端提供，则用于补充能力说明
+- 对输入字段，应优先把 `input_schema.properties.<field>.description` 理解为逐字段填写说明，而不是面向 Responder 的内部注释。
+- 对输出字段，`output_schema.properties.<field>.description` 应按返回字段含义理解。
 - Caller代理可以根据此自动构造合约中的`task.input`和`task.output_schema`。
 - 任选：使用 `If-None-Match` + `ETag` 做模板缓存与增量刷新。
 

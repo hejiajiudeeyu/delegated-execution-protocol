@@ -2,11 +2,11 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "additionalProperties": false,
-  "required": ["text"],
+  "required": ["summary"],
   "properties": {
-    "text": {
+    "summary": {
       "type": "string",
-      "minLength": 1
+      "description": "The returned workspace summary that the Caller can reuse in status updates or review notes."
     }
   }
 }
