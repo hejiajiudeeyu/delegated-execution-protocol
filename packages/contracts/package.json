@@ -9,6 +9,16 @@
     "./package.json": "./package.json",
     "./templates/manifest.json": "./templates/manifest.json"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hejiajiudeeyu/delegated-execution-protocol.git",
+    "directory": "packages/contracts"
+  },
+  "homepage": "https://github.com/hejiajiudeeyu/delegated-execution-protocol/tree/main/packages/contracts#readme",
+  "bugs": {
+    "url": "https://github.com/hejiajiudeeyu/delegated-execution-protocol/issues"
+  },
+  "license": "Apache-2.0",
   "files": [
     "src",
     "README.md",
