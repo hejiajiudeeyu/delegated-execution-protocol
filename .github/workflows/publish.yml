@@ -22,3 +22,5 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm publish --workspace @delexec/contracts --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
