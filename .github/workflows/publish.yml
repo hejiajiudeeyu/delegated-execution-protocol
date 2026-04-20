@@ -21,18 +21,6 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-      - name: Diagnose npm auth (whoami + access)
-        run: |
-          set +e
-          echo "--- npm whoami ---"
-          npm whoami
-          echo "--- npm access list packages (will show only packages we can read) ---"
-          npm access list packages 2>&1 | head -40 || true
-          echo "--- token presence check ---"
-          if [ -n "$NODE_AUTH_TOKEN" ]; then echo "NODE_AUTH_TOKEN is set (length=${#NODE_AUTH_TOKEN})"; else echo "NODE_AUTH_TOKEN is EMPTY"; fi
-          set -e
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - run: npm publish --workspace @delexec/contracts --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
