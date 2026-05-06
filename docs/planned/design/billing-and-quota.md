@@ -660,17 +660,16 @@ Constraints (draft):
 - `total_cents` must be `<= billing.max_charge_cents`; over → cap rule (debit at `max_charge_cents`).
 - Existing custom statistic fields (`tokens_in / tokens_out / pages_processed`) remain compatible but **are not** billing evidence — only informational disclosure.
 
-#### A.1.4 Platform-internal `tenant_quota` and `prepaid_balance`
+#### A.1.4 Platform-internal `tenant_quota` with Unified Balance
 
 ```json
 {
   "tenant_id": "user_acme",
-  "scope": "caller",
-  "prepaid_balance_cents": 50000,
-  "currency": "USD",
+  "credit_balance_cents": 50000,
+  "currency": "PTS",
   "windows": [
-    { "window_kind": "daily",   "max_amount_cents": 100000, "used_amount_cents": 25000 },
-    { "window_kind": "monthly", "max_amount_cents": 2000000, "used_amount_cents": 350000 }
+    { "window_kind": "daily",   "max_amount_cents": 100000, "used_as_caller_cents": 25000, "earned_as_responder_cents": 4000 },
+    { "window_kind": "monthly", "max_amount_cents": 2000000, "used_as_caller_cents": 350000, "earned_as_responder_cents": 60000 }
   ],
   "rate_limit_per_second": 2,
   "credit_mode": "prepaid",
@@ -680,10 +679,14 @@ Constraints (draft):
 
 Direction (draft):
 
+- **Unified account**: a single `tenant_id` shares one `credit_balance_cents`; balances are **not** split by caller / responder scope. The same user may both consume balance as a caller and earn balance as a responder; earned credits enter the spendable balance immediately ("earn = spend"). This keeps the credit-economy network energetic via bidirectional flow — OPC-to-OPC calls have minimal friction.
+- `used_as_caller_cents` and `earned_as_responder_cents` are use-history dimensions retained for metrics / risk control / a possible future "split-by-identity" evolution; they do not change unified-balance semantics.
+- `currency` is a platform-defined name (e.g. `PTS` = points / `CALL_CREDIT` = call credit) and is **not necessarily** an ISO 4217 fiat code — the v0.2 platform RFC's default is a credit-point system, and ISO 4217 codes only apply when fiat integration arrives.
 - Default `credit_mode = prepaid`.
 - `window_kind` supports at least `daily | monthly | total`.
 - `rate_limit_per_second` for new callers defaults low (suggested 2/s or lower, since per-call amounts are large and execution takes seconds to minutes).
-- Responder-scope quota means "max billable revenue this responder can produce in the window".
+- Revenue from `untrusted`-tier hotlines does not enter `credit_balance_cents` immediately; it goes through the §11.4 settlement delay before merging into the unified balance.
+- The current phase does not open real-currency withdrawal — `credit_balance_cents` only flows within the ecosystem. A withdrawal path (paired with fiat integration) belongs to a later phase and is out of scope for this protocol-layer direction.
 
 ### A.2 Error Code and Event Proposals
 

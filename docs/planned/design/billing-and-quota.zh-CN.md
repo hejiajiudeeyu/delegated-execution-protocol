@@ -660,17 +660,16 @@ base_plus_duration：
 - `total_cents` 必须 `<= billing.max_charge_cents`，超出按封顶规则（按 `max_charge_cents` 实扣）。
 - responder 现有的自定义统计字段（`tokens_in / tokens_out / pages_processed`）保持兼容，不强制替换；但**不**作为计费证据，仅作信息性披露。
 
-#### A.1.4 平台内部 `tenant_quota` 与 `prepaid_balance`
+#### A.1.4 平台内部 `tenant_quota` 与合并余额
 
 ```json
 {
   "tenant_id": "user_acme",
-  "scope": "caller",
-  "prepaid_balance_cents": 50000,
-  "currency": "USD",
+  "credit_balance_cents": 50000,
+  "currency": "PTS",
   "windows": [
-    { "window_kind": "daily",   "max_amount_cents": 100000, "used_amount_cents": 25000 },
-    { "window_kind": "monthly", "max_amount_cents": 2000000, "used_amount_cents": 350000 }
+    { "window_kind": "daily",   "max_amount_cents": 100000, "used_as_caller_cents": 25000, "earned_as_responder_cents": 4000 },
+    { "window_kind": "monthly", "max_amount_cents": 2000000, "used_as_caller_cents": 350000, "earned_as_responder_cents": 60000 }
   ],
   "rate_limit_per_second": 2,
   "credit_mode": "prepaid",
@@ -680,10 +679,14 @@ base_plus_duration：
 
 提议要点（草案）：
 
+- **合并账户**：同一 `tenant_id` 共享一个 `credit_balance_cents`，**不**按 caller / responder 分账户。一个 user 既可以作为 caller 消费余额，也可以作为 responder 赚取余额，赚取的点数立刻进可用余额（"赚的就是花的"）。这是为了让点数生态网络的能量靠双向流动维持——OPC 之间互调时摩擦最小。
+- `used_as_caller_cents` 与 `earned_as_responder_cents` 是 use_history 维度，给 metrics / 风控 / 未来可能的"按身份分账"演进留接口；它们不影响余额合并语义。
+- `currency` 字段是平台自定义命名（例 `PTS` = 点数 / `CALL_CREDIT` = 呼叫点），**不一定**是 ISO 4217 法币代码——v0.2 platform RFC 默认实现是点数体系，未来若接入法币才会用 ISO 4217 代码。
 - 默认 `credit_mode = prepaid`。
 - `window_kind` 至少支持 `daily | monthly | total`。
 - `rate_limit_per_second` 新 caller 默认低值（建议 2/s 或更低，因为单次任务量级大、执行秒到分钟级）。
-- responder-scope quota 表示"该 responder 单位时间内最多能产生多少计费收入"。
+- `untrusted` tier 的 hotline 收入不能立即合并进 `credit_balance_cents`，必须经过 §11.4 落账延迟；落账后才合并。
+- 当前阶段平台不开放真实货币提现——`credit_balance_cents` 只能在生态内流转。提现路径（与法币接入一并）属于后续阶段，与本协议层方向无关。
 
 ### A.2 错误码与事件提议
 
