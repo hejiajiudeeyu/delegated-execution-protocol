@@ -19,6 +19,19 @@
   "constraints": {
     "max_hard_timeout_s": 300
   },
+  "pricing_hint": {
+    "pricing_model": "fixed_price",
+    "currency": "PTS",
+    "fixed_price_cents": 0,
+    "base_price_cents": null,
+    "variable_unit": null,
+    "variable_unit_description": null,
+    "variable_unit_price_cents": null,
+    "max_total_cents": 0,
+    "free_tier": null,
+    "billing_disclosure_url": null,
+    "trust_tier": "untrusted"
+  },
   "sla_hint": {
     "p95_exec_ms": 5000,
     "timeout_rate_7d": 0.05

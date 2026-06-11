@@ -34,23 +34,34 @@ async function main() {
     const checkScript = `
       import fs from "node:fs";
       import {
+        PRICING_MODEL,
         REQUEST_STATUS,
         getBundledProtocolDocsRoot,
         getBundledTemplatesRoot,
         hasBundledProtocolAssets,
         loadBundledTemplateManifest,
-        resolveBundledTemplatePath
+        resolveBundledTemplatePath,
+        validatePricingHint
       } from "@delexec/contracts";
 
       if (REQUEST_STATUS.SUCCEEDED !== "SUCCEEDED") {
         throw new Error("contracts_request_status_export_missing");
+      }
+      if (PRICING_MODEL.FIXED_PRICE !== "fixed_price") {
+        throw new Error("contracts_pricing_model_export_missing");
       }
       if (!hasBundledProtocolAssets()) {
         throw new Error("contracts_protocol_assets_missing");
       }
 
       const manifest = loadBundledTemplateManifest();
+      const catalogTemplatePath = resolveBundledTemplatePath("catalog-hotline.template.json");
       const inputSchemaPath = resolveBundledTemplatePath("hotlines/local.delegated-execution.workspace-summary.v1/input.schema.json");
+      const catalogTemplate = JSON.parse(fs.readFileSync(catalogTemplatePath, "utf8"));
+      const pricing = validatePricingHint(catalogTemplate.pricing_hint);
+      if (!pricing.valid) {
+        throw new Error("contracts_catalog_pricing_hint_invalid:" + pricing.errors.join(","));
+      }
       if (!fs.existsSync(inputSchemaPath)) {
         throw new Error("contracts_template_input_schema_missing");
       }

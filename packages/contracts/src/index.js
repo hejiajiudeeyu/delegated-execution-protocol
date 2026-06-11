@@ -38,8 +38,39 @@ export const ERROR_DOMAIN = {
   TASK: 'TASK',
   CALLER: 'CALLER',
   RELAY: 'RELAY',
-  OPS: 'OPS'
+  OPS: 'OPS',
+  ERR: 'ERR'
 };
+
+export const PRICING_MODEL = Object.freeze({
+  FIXED_PRICE: 'fixed_price',
+  BASE_PLUS_DURATION: 'base_plus_duration',
+  BASE_PLUS_TOKENS: 'base_plus_tokens'
+});
+
+export const TRUST_TIER = Object.freeze({
+  UNTRUSTED: 'untrusted',
+  TRUSTED: 'trusted',
+  VERIFIED: 'verified'
+});
+
+export const BILLING_ERROR_CODE = Object.freeze({
+  BILLING_CONSENT_REQUIRED: 'ERR_BILLING_CONSENT_REQUIRED',
+  BILLING_PRICING_MODEL_MISMATCH: 'ERR_BILLING_PRICING_MODEL_MISMATCH',
+  BILLING_MAX_CHARGE_TOO_LOW: 'ERR_BILLING_MAX_CHARGE_TOO_LOW',
+  PREPAID_BALANCE_INSUFFICIENT: 'ERR_PREPAID_BALANCE_INSUFFICIENT',
+  BILLING_CURRENCY_UNSUPPORTED: 'ERR_BILLING_CURRENCY_UNSUPPORTED',
+  TRUST_TIER_LIMIT_EXCEEDED: 'ERR_TRUST_TIER_LIMIT_EXCEEDED'
+});
+
+export const BILLING_EVENT = Object.freeze({
+  REQUEST_BILLING_HELD: 'caller.request.billing_held',
+  REQUEST_BILLING_CAPPED: 'caller.request.billing_capped',
+  REQUEST_REFUNDED_UNVERIFIED: 'caller.request.refunded_unverified',
+  REQUEST_REFUNDED_TIMEOUT: 'caller.request.refunded_timeout',
+  REQUEST_REFUNDED_FAILED: 'caller.request.refunded_failed',
+  REQUEST_REFUNDED_HOTLINE_FROZEN: 'caller.request.refunded_hotline_frozen'
+});
 
 export const ERROR_REGISTRY = Object.freeze({
   AUTH_UNAUTHORIZED: { retryable: false },
@@ -170,7 +201,14 @@ export const ERROR_REGISTRY = Object.freeze({
 
   RELAY_INTERNAL_ERROR: { retryable: true },
 
-  OPS_SUPERVISOR_INTERNAL_ERROR: { retryable: true }
+  OPS_SUPERVISOR_INTERNAL_ERROR: { retryable: true },
+
+  [BILLING_ERROR_CODE.BILLING_CONSENT_REQUIRED]: { retryable: false },
+  [BILLING_ERROR_CODE.BILLING_PRICING_MODEL_MISMATCH]: { retryable: false },
+  [BILLING_ERROR_CODE.BILLING_MAX_CHARGE_TOO_LOW]: { retryable: false },
+  [BILLING_ERROR_CODE.PREPAID_BALANCE_INSUFFICIENT]: { retryable: true },
+  [BILLING_ERROR_CODE.BILLING_CURRENCY_UNSUPPORTED]: { retryable: false },
+  [BILLING_ERROR_CODE.TRUST_TIER_LIMIT_EXCEEDED]: { retryable: false }
 });
 
 export function getErrorDomain(code = '') {
@@ -195,6 +233,152 @@ export function buildStructuredError(code, message, options = {}) {
     },
     ...extra
   };
+}
+
+function isObject(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function isNonEmptyString(value) {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function isNonNegativeInteger(value) {
+  return Number.isSafeInteger(value) && value >= 0;
+}
+
+function isValidIsoDateTime(value) {
+  if (value === undefined || value === null) {
+    return true;
+  }
+  if (!isNonEmptyString(value)) {
+    return false;
+  }
+  const time = Date.parse(value);
+  return Number.isFinite(time);
+}
+
+function pushIf(errors, condition, message) {
+  if (condition) {
+    errors.push(message);
+  }
+}
+
+function pricingModelOf(pricingHint) {
+  return pricingHint?.pricing_model || PRICING_MODEL.FIXED_PRICE;
+}
+
+function maxTotalCentsOf(pricingHint) {
+  if (Number.isSafeInteger(pricingHint?.max_total_cents)) {
+    return pricingHint.max_total_cents;
+  }
+  if (pricingModelOf(pricingHint) === PRICING_MODEL.FIXED_PRICE) {
+    return pricingHint?.fixed_price_cents;
+  }
+  return pricingHint?.max_total_cents;
+}
+
+export function validatePricingHint(pricingHint) {
+  const errors = [];
+  if (!isObject(pricingHint)) {
+    return { valid: false, errors: ['pricing_hint must be an object'] };
+  }
+
+  const model = pricingModelOf(pricingHint);
+  pushIf(errors, !Object.values(PRICING_MODEL).includes(model), 'pricing_hint.pricing_model is unsupported');
+  pushIf(errors, !isNonEmptyString(pricingHint.currency), 'pricing_hint.currency is required');
+  pushIf(errors, pricingHint.trust_tier !== undefined && !Object.values(TRUST_TIER).includes(pricingHint.trust_tier), 'pricing_hint.trust_tier is unsupported');
+
+  if (model === PRICING_MODEL.FIXED_PRICE) {
+    pushIf(errors, !isNonNegativeInteger(pricingHint.fixed_price_cents), 'pricing_hint.fixed_price_cents must be a non-negative integer');
+    pushIf(errors, !isNonNegativeInteger(pricingHint.max_total_cents), 'pricing_hint.max_total_cents must be a non-negative integer');
+    if (isNonNegativeInteger(pricingHint.fixed_price_cents) && isNonNegativeInteger(pricingHint.max_total_cents)) {
+      pushIf(errors, pricingHint.max_total_cents < pricingHint.fixed_price_cents, 'pricing_hint.max_total_cents must be >= fixed_price_cents');
+    }
+  }
+
+  if (model === PRICING_MODEL.BASE_PLUS_DURATION || model === PRICING_MODEL.BASE_PLUS_TOKENS) {
+    pushIf(errors, !isNonNegativeInteger(pricingHint.base_price_cents), 'pricing_hint.base_price_cents must be a non-negative integer');
+    pushIf(errors, !isNonEmptyString(pricingHint.variable_unit), 'pricing_hint.variable_unit is required');
+    pushIf(errors, !isNonEmptyString(pricingHint.variable_unit_description), 'pricing_hint.variable_unit_description is required');
+    pushIf(errors, !isNonNegativeInteger(pricingHint.variable_unit_price_cents), 'pricing_hint.variable_unit_price_cents must be a non-negative integer');
+    pushIf(errors, !isNonNegativeInteger(pricingHint.max_total_cents), 'pricing_hint.max_total_cents must be a non-negative integer');
+    if (isNonNegativeInteger(pricingHint.base_price_cents) && isNonNegativeInteger(pricingHint.max_total_cents)) {
+      pushIf(errors, pricingHint.max_total_cents < pricingHint.base_price_cents, 'pricing_hint.max_total_cents must be >= base_price_cents');
+    }
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+export function validateTaskBillingClaims(billing, pricingHint) {
+  const errors = [];
+  if (!isObject(billing)) {
+    return { valid: false, errors: ['billing must be an object'] };
+  }
+
+  const pricing = validatePricingHint(pricingHint);
+  errors.push(...pricing.errors);
+  if (!pricing.valid) {
+    return { valid: false, errors };
+  }
+
+  const pricingModel = pricingModelOf(pricingHint);
+  const maxTotalCents = maxTotalCentsOf(pricingHint);
+  pushIf(errors, billing.acknowledged !== true, 'billing.acknowledged must be true');
+  pushIf(errors, billing.pricing_model !== pricingModel, 'billing.pricing_model must match pricing_hint.pricing_model');
+  pushIf(errors, billing.currency !== pricingHint.currency, 'billing.currency must match pricing_hint.currency');
+  pushIf(errors, !isNonNegativeInteger(billing.max_charge_cents), 'billing.max_charge_cents must be a non-negative integer');
+  if (isNonNegativeInteger(billing.max_charge_cents) && isNonNegativeInteger(maxTotalCents)) {
+    pushIf(errors, billing.max_charge_cents < maxTotalCents, 'billing.max_charge_cents must be >= pricing_hint.max_total_cents');
+  }
+  pushIf(errors, billing.trust_tier_seen !== undefined && pricingHint.trust_tier !== undefined && billing.trust_tier_seen !== pricingHint.trust_tier, 'billing.trust_tier_seen must match pricing_hint.trust_tier');
+  pushIf(errors, !isValidIsoDateTime(billing.consent_at), 'billing.consent_at must be an ISO datetime string');
+
+  return { valid: errors.length === 0, errors };
+}
+
+export function validateBillingUsage(usage, pricingHint, billing) {
+  const errors = [];
+  if (!isObject(usage)) {
+    return { valid: false, errors: ['usage must be an object'] };
+  }
+
+  const claims = validateTaskBillingClaims(billing, pricingHint);
+  errors.push(...claims.errors);
+  if (!claims.valid) {
+    return { valid: false, errors };
+  }
+
+  const pricingModel = pricingModelOf(pricingHint);
+  pushIf(errors, usage.pricing_model !== pricingModel, 'usage.pricing_model must match pricing_hint.pricing_model');
+  pushIf(errors, !isNonNegativeInteger(usage.total_cents), 'usage.total_cents must be a non-negative integer');
+  if (isNonNegativeInteger(usage.total_cents)) {
+    pushIf(errors, usage.total_cents > billing.max_charge_cents, 'usage.total_cents must be <= billing.max_charge_cents');
+  }
+
+  if (pricingModel === PRICING_MODEL.FIXED_PRICE) {
+    if (isNonNegativeInteger(usage.total_cents) && isNonNegativeInteger(pricingHint.fixed_price_cents)) {
+      pushIf(errors, usage.total_cents !== pricingHint.fixed_price_cents, 'usage.total_cents must equal pricing_hint.fixed_price_cents');
+    }
+    return { valid: errors.length === 0, errors };
+  }
+
+  pushIf(errors, usage.base_price_cents !== pricingHint.base_price_cents, 'usage.base_price_cents must match pricing_hint.base_price_cents');
+  pushIf(errors, usage.variable_unit !== pricingHint.variable_unit, 'usage.variable_unit must match pricing_hint.variable_unit');
+  pushIf(errors, !isNonNegativeInteger(usage.variable_units), 'usage.variable_units must be a non-negative integer');
+  pushIf(errors, usage.variable_unit_price_cents !== pricingHint.variable_unit_price_cents, 'usage.variable_unit_price_cents must match pricing_hint.variable_unit_price_cents');
+  pushIf(errors, !isNonNegativeInteger(usage.variable_subtotal_cents), 'usage.variable_subtotal_cents must be a non-negative integer');
+
+  if (isNonNegativeInteger(usage.variable_units) && isNonNegativeInteger(pricingHint.variable_unit_price_cents) && isNonNegativeInteger(usage.variable_subtotal_cents)) {
+    const expectedSubtotal = usage.variable_units * pricingHint.variable_unit_price_cents;
+    pushIf(errors, usage.variable_subtotal_cents !== expectedSubtotal, 'usage.variable_subtotal_cents must equal variable_units * variable_unit_price_cents');
+  }
+  if (isNonNegativeInteger(pricingHint.base_price_cents) && isNonNegativeInteger(usage.variable_subtotal_cents) && isNonNegativeInteger(usage.total_cents)) {
+    pushIf(errors, usage.total_cents !== pricingHint.base_price_cents + usage.variable_subtotal_cents, 'usage.total_cents must equal base_price_cents + variable_subtotal_cents');
+  }
+
+  return { valid: errors.length === 0, errors };
 }
 
 export function canonicalizeResultPackageForSignature(result = {}) {

@@ -11,11 +11,18 @@ Stable protocol exports in this package:
 - `REQUEST_STATUS`
 - `ERROR_DOMAIN`
 - `ERROR_REGISTRY`
+- `PRICING_MODEL`
+- `TRUST_TIER`
+- `BILLING_ERROR_CODE`
+- `BILLING_EVENT`
 - `getErrorDomain(code)`
 - `isKnownErrorCode(code)`
 - `isRetryableErrorCode(code, fallback?)`
 - `buildStructuredError(code, message, options?)`
 - `canonicalizeResultPackageForSignature(result)`
+- `validatePricingHint(pricingHint)`
+- `validateTaskBillingClaims(billing, pricingHint)`
+- `validateBillingUsage(usage, pricingHint, billing)`
 - `getBundledTemplatesRoot()`
 - `getBundledProtocolDocsRoot()`
 - `hasBundledProtocolAssets()`
@@ -28,6 +35,7 @@ Protocol-facing stability commitments:
 - error codes and their default retryability semantics are treated as protocol surface
 - request lifecycle states are treated as protocol surface
 - result-package canonicalization for signing is treated as protocol surface
+- hotline `pricing_hint`, caller token `billing`, and billing-aware result `usage` helpers are treated as additive protocol surface for paid-call implementations
 - template packaging format is treated as protocol surface
 
 ## Packaged Assets
