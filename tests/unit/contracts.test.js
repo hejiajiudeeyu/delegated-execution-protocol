@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { canonicalizeResultPackageForSignature, ERROR_DOMAIN, REQUEST_STATUS, validateResultPackage } from "@delexec/contracts";
+import {
+  canonicalizeResultPackageForSignature,
+  ERROR_DOMAIN,
+  REQUEST_STATUS,
+  validateResultPackage,
+  validateServiceResolutionRequest,
+  validateServiceResolutionResponse
+} from "@delexec/contracts";
 
 describe("@delexec/contracts", () => {
   it("contains MVP request statuses", () => {
@@ -173,6 +180,57 @@ describe("@delexec/contracts", () => {
       const { valid, errors } = validateResultPackage(null);
       expect(valid).toBe(false);
       expect(errors.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("service resolution contracts", () => {
+    it("accepts a service resolution request keyed by service_id", () => {
+      const result = validateServiceResolutionRequest({
+        request_id: "req_service_1",
+        service_id: "mineru.document.parse.v1",
+        constraints: {
+          availability_status: "healthy",
+          model_version: "mineru-2.x",
+          max_queue_depth: 20
+        },
+        result_delivery: {
+          kind: "local",
+          address: "caller-controller"
+        }
+      });
+
+      expect(result).toEqual({ valid: true, errors: [] });
+    });
+
+    it("requires request_id plus service_id or capability", () => {
+      expect(validateServiceResolutionRequest({ service_id: "mineru.document.parse.v1" }).errors).toContain("missing request_id");
+      expect(validateServiceResolutionRequest({ request_id: "req_missing_selector" }).errors).toContain(
+        "service_id or capability is required"
+      );
+    });
+
+    it("accepts a response with selected concrete responder and hotline bindings", () => {
+      const result = validateServiceResolutionResponse({
+        selected: {
+          service_id: "mineru.document.parse.v1",
+          responder_id: "responder_mineru_a",
+          hotline_id: "mineru.machine-a.parse.v1",
+          selection_reason: "healthy_deterministic"
+        },
+        task_token: "token",
+        claims: {
+          request_id: "req_service_1",
+          responder_id: "responder_mineru_a",
+          hotline_id: "mineru.machine-a.parse.v1"
+        },
+        delivery_meta: {
+          request_id: "req_service_1",
+          responder_id: "responder_mineru_a",
+          hotline_id: "mineru.machine-a.parse.v1"
+        }
+      });
+
+      expect(result).toEqual({ valid: true, errors: [] });
     });
   });
 });

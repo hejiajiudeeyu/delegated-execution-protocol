@@ -115,6 +115,8 @@ export const ERROR_REGISTRY = Object.freeze({
   CONTRACT_UNSUPPORTED_VERSION: { retryable: false },
   CONTRACT_INVALID_TRANSPORT_BODY: { retryable: false },
   CONTRACT_INVALID_TRANSPORT_TYPE: { retryable: false },
+  CONTRACT_INVALID_SERVICE_RESOLUTION_REQUEST: { retryable: false },
+  CONTRACT_INVALID_SERVICE_RESOLUTION_RESPONSE: { retryable: false },
 
   EXEC_TIMEOUT: { retryable: true },
   EXEC_TIMEOUT_HARD: { retryable: false },
@@ -151,6 +153,7 @@ export const ERROR_REGISTRY = Object.freeze({
   PLATFORM_REVIEW_TEST_UNSUPPORTED: { retryable: false },
 
   CATALOG_HOTLINE_NOT_FOUND: { retryable: false },
+  CATALOG_SERVICE_NOT_FOUND: { retryable: false },
 
   REQUEST_NOT_FOUND: { retryable: false },
   REQUEST_BINDING_MISMATCH: { retryable: false },
@@ -441,6 +444,68 @@ export function validateResultPackage(pkg) {
   } else if (pkg.timing.elapsed_ms === undefined || pkg.timing.elapsed_ms === null) {
     errors.push('timing.elapsed_ms is required');
   }
+  return { valid: errors.length === 0, errors };
+}
+
+export function validateServiceResolutionRequest(request) {
+  if (!request || typeof request !== 'object' || Array.isArray(request)) {
+    return { valid: false, errors: ['service resolution request must be an object'] };
+  }
+
+  const errors = [];
+  pushIf(errors, !isNonEmptyString(request.request_id), 'missing request_id');
+  pushIf(errors, !isNonEmptyString(request.service_id) && !isNonEmptyString(request.capability), 'service_id or capability is required');
+  pushIf(errors, request.service_id !== undefined && !isNonEmptyString(request.service_id), 'service_id must be a non-empty string');
+  pushIf(errors, request.capability !== undefined && !isNonEmptyString(request.capability), 'capability must be a non-empty string');
+  pushIf(errors, request.task_type !== undefined && !isNonEmptyString(request.task_type), 'task_type must be a non-empty string');
+
+  if (request.constraints !== undefined && !isObject(request.constraints)) {
+    errors.push('constraints must be an object');
+  }
+  if (request.constraints?.availability_status !== undefined && !['healthy', 'degraded', 'offline'].includes(request.constraints.availability_status)) {
+    errors.push('constraints.availability_status is unsupported');
+  }
+  if (request.constraints?.max_queue_depth !== undefined && !isNonNegativeInteger(request.constraints.max_queue_depth)) {
+    errors.push('constraints.max_queue_depth must be a non-negative integer');
+  }
+  if (request.result_delivery !== undefined && !isObject(request.result_delivery)) {
+    errors.push('result_delivery must be an object');
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+export function validateServiceResolutionResponse(response) {
+  if (!response || typeof response !== 'object' || Array.isArray(response)) {
+    return { valid: false, errors: ['service resolution response must be an object'] };
+  }
+
+  const errors = [];
+  const selected = response.selected;
+  if (!isObject(selected)) {
+    errors.push('selected must be an object');
+  } else {
+    pushIf(errors, !isNonEmptyString(selected.responder_id), 'selected.responder_id is required');
+    pushIf(errors, !isNonEmptyString(selected.hotline_id), 'selected.hotline_id is required');
+    pushIf(errors, selected.service_id !== undefined && !isNonEmptyString(selected.service_id), 'selected.service_id must be a non-empty string');
+    pushIf(errors, selected.selection_reason !== undefined && !isNonEmptyString(selected.selection_reason), 'selected.selection_reason must be a non-empty string');
+  }
+  pushIf(errors, !isNonEmptyString(response.task_token), 'task_token is required');
+  if (!isObject(response.claims)) {
+    errors.push('claims must be an object');
+  }
+  if (!isObject(response.delivery_meta)) {
+    errors.push('delivery_meta must be an object');
+  }
+  if (isObject(selected) && isObject(response.claims)) {
+    pushIf(errors, response.claims.responder_id !== selected.responder_id, 'claims.responder_id must match selected.responder_id');
+    pushIf(errors, response.claims.hotline_id !== selected.hotline_id, 'claims.hotline_id must match selected.hotline_id');
+  }
+  if (isObject(selected) && isObject(response.delivery_meta)) {
+    pushIf(errors, response.delivery_meta.responder_id !== selected.responder_id, 'delivery_meta.responder_id must match selected.responder_id');
+    pushIf(errors, response.delivery_meta.hotline_id !== selected.hotline_id, 'delivery_meta.hotline_id must match selected.hotline_id');
+  }
+
   return { valid: errors.length === 0, errors };
 }
 
