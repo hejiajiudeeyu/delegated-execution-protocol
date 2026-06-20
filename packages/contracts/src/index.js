@@ -290,8 +290,6 @@ export function validatePricingHint(pricingHint) {
   const model = pricingModelOf(pricingHint);
   pushIf(errors, !Object.values(PRICING_MODEL).includes(model), 'pricing_hint.pricing_model is unsupported');
   pushIf(errors, !isNonEmptyString(pricingHint.currency), 'pricing_hint.currency is required');
-  pushIf(errors, pricingHint.trust_tier !== undefined && !Object.values(TRUST_TIER).includes(pricingHint.trust_tier), 'pricing_hint.trust_tier is unsupported');
-
   if (model === PRICING_MODEL.FIXED_PRICE) {
     pushIf(errors, !isNonNegativeInteger(pricingHint.fixed_price_cents), 'pricing_hint.fixed_price_cents must be a non-negative integer');
     pushIf(errors, !isNonNegativeInteger(pricingHint.max_total_cents), 'pricing_hint.max_total_cents must be a non-negative integer');
@@ -314,7 +312,50 @@ export function validatePricingHint(pricingHint) {
   return { valid: errors.length === 0, errors };
 }
 
-export function validateTaskBillingClaims(billing, pricingHint) {
+function normalizeGuidanceField(value, fieldName, errors) {
+  if (value === undefined || value === null) {
+    return null;
+  }
+  if (typeof value === 'string') {
+    pushIf(errors, !isNonEmptyString(value), `${fieldName} must be a non-empty string`);
+    return isNonEmptyString(value) ? [value.trim()] : null;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      pushIf(errors, !isNonEmptyString(item), `${fieldName} items must be non-empty strings`);
+    }
+    return value.map((item) => String(item).trim()).filter(Boolean);
+  }
+  errors.push(`${fieldName} must be a string or string array`);
+  return null;
+}
+
+export function validateCatalogGuidanceFields(fields = {}) {
+  const errors = [];
+  const recommendedFor = normalizeGuidanceField(fields.recommended_for, 'recommended_for', errors);
+  const notRecommendedFor = normalizeGuidanceField(fields.not_recommended_for, 'not_recommended_for', errors);
+  const limitations = normalizeGuidanceField(fields.limitations, 'limitations', errors);
+  return {
+    valid: errors.length === 0,
+    errors,
+    normalized: {
+      recommended_for: recommendedFor,
+      not_recommended_for: notRecommendedFor,
+      limitations
+    }
+  };
+}
+
+export function validateResponderTrustTier(trustTier) {
+  const errors = [];
+  if (trustTier === undefined || trustTier === null) {
+    return { valid: true, errors };
+  }
+  pushIf(errors, !Object.values(TRUST_TIER).includes(trustTier), 'trust_tier is unsupported');
+  return { valid: errors.length === 0, errors };
+}
+
+export function validateTaskBillingClaims(billing, pricingHint, options = {}) {
   const errors = [];
   if (!isObject(billing)) {
     return { valid: false, errors: ['billing must be an object'] };
@@ -328,6 +369,8 @@ export function validateTaskBillingClaims(billing, pricingHint) {
 
   const pricingModel = pricingModelOf(pricingHint);
   const maxTotalCents = maxTotalCentsOf(pricingHint);
+  const responderTrustTier = options.responderTrustTier;
+  const pricingHintVersion = options.pricingHintVersion;
   pushIf(errors, billing.acknowledged !== true, 'billing.acknowledged must be true');
   pushIf(errors, billing.pricing_model !== pricingModel, 'billing.pricing_model must match pricing_hint.pricing_model');
   pushIf(errors, billing.currency !== pricingHint.currency, 'billing.currency must match pricing_hint.currency');
@@ -335,19 +378,38 @@ export function validateTaskBillingClaims(billing, pricingHint) {
   if (isNonNegativeInteger(billing.max_charge_cents) && isNonNegativeInteger(maxTotalCents)) {
     pushIf(errors, billing.max_charge_cents < maxTotalCents, 'billing.max_charge_cents must be >= pricing_hint.max_total_cents');
   }
-  pushIf(errors, billing.trust_tier_seen !== undefined && pricingHint.trust_tier !== undefined && billing.trust_tier_seen !== pricingHint.trust_tier, 'billing.trust_tier_seen must match pricing_hint.trust_tier');
+  if (responderTrustTier !== undefined && responderTrustTier !== null) {
+    pushIf(
+      errors,
+      billing.trust_tier_seen !== undefined && billing.trust_tier_seen !== responderTrustTier,
+      'billing.trust_tier_seen must match responder trust_tier'
+    );
+  } else if (pricingHint.trust_tier !== undefined) {
+    pushIf(
+      errors,
+      billing.trust_tier_seen !== undefined && billing.trust_tier_seen !== pricingHint.trust_tier,
+      'billing.trust_tier_seen must match pricing_hint.trust_tier'
+    );
+  }
+  if (pricingHintVersion !== undefined && pricingHintVersion !== null) {
+    pushIf(
+      errors,
+      billing.pricing_hint_version !== undefined && billing.pricing_hint_version !== pricingHintVersion,
+      'billing.pricing_hint_version must match catalog submission_version'
+    );
+  }
   pushIf(errors, !isValidIsoDateTime(billing.consent_at), 'billing.consent_at must be an ISO datetime string');
 
   return { valid: errors.length === 0, errors };
 }
 
-export function validateBillingUsage(usage, pricingHint, billing) {
+export function validateBillingUsage(usage, pricingHint, billing, options = {}) {
   const errors = [];
   if (!isObject(usage)) {
     return { valid: false, errors: ['usage must be an object'] };
   }
 
-  const claims = validateTaskBillingClaims(billing, pricingHint);
+  const claims = validateTaskBillingClaims(billing, pricingHint, options);
   errors.push(...claims.errors);
   if (!claims.valid) {
     return { valid: false, errors };

@@ -4,9 +4,13 @@ import {
   canonicalizeResultPackageForSignature,
   ERROR_DOMAIN,
   REQUEST_STATUS,
+  TRUST_TIER,
+  validateCatalogGuidanceFields,
+  validateResponderTrustTier,
   validateResultPackage,
   validateServiceResolutionRequest,
-  validateServiceResolutionResponse
+  validateServiceResolutionResponse,
+  validateTaskBillingClaims
 } from "@delexec/contracts";
 
 describe("@delexec/contracts", () => {
@@ -231,6 +235,85 @@ describe("@delexec/contracts", () => {
       });
 
       expect(result).toEqual({ valid: true, errors: [] });
+    });
+  });
+
+  describe("validateCatalogGuidanceFields", () => {
+    it("accepts string or string array guidance fields", () => {
+      expect(
+        validateCatalogGuidanceFields({
+          recommended_for: "PDF extraction",
+          not_recommended_for: ["handwriting"],
+          limitations: ["max 50 pages"]
+        })
+      ).toEqual({
+        valid: true,
+        errors: [],
+        normalized: {
+          recommended_for: ["PDF extraction"],
+          not_recommended_for: ["handwriting"],
+          limitations: ["max 50 pages"]
+        }
+      });
+    });
+
+    it("rejects invalid guidance field types", () => {
+      const result = validateCatalogGuidanceFields({ recommended_for: 42 });
+      expect(result.valid).toBe(false);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("validateResponderTrustTier", () => {
+    it("accepts known trust tiers", () => {
+      expect(validateResponderTrustTier(TRUST_TIER.VERIFIED)).toEqual({ valid: true, errors: [] });
+    });
+
+    it("rejects unsupported trust tiers", () => {
+      expect(validateResponderTrustTier("unknown").valid).toBe(false);
+    });
+  });
+
+  describe("validateTaskBillingClaims", () => {
+    const pricingHint = {
+      pricing_model: "fixed_price",
+      currency: "USD",
+      fixed_price_cents: 100,
+      max_total_cents: 100
+    };
+
+    it("matches responder trust tier and pricing hint version", () => {
+      const result = validateTaskBillingClaims(
+        {
+          acknowledged: true,
+          pricing_model: "fixed_price",
+          currency: "USD",
+          max_charge_cents: 100,
+          trust_tier_seen: "verified",
+          pricing_hint_version: 2,
+          consent_at: "2026-06-20T00:00:00.000Z"
+        },
+        pricingHint,
+        { responderTrustTier: "verified", pricingHintVersion: 2 }
+      );
+      expect(result).toEqual({ valid: true, errors: [] });
+    });
+
+    it("rejects mismatched pricing hint version", () => {
+      const result = validateTaskBillingClaims(
+        {
+          acknowledged: true,
+          pricing_model: "fixed_price",
+          currency: "USD",
+          max_charge_cents: 100,
+          pricing_hint_version: 1,
+          consent_at: "2026-06-20T00:00:00.000Z"
+        },
+        pricingHint,
+        { pricingHintVersion: 2 }
+      );
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain("billing.pricing_hint_version must match catalog submission_version");
     });
   });
 });
