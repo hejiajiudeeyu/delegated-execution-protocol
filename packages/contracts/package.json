@@ -1,6 +1,6 @@
 {
   "name": "@delexec/contracts",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Protocol enums, error registry, canonicalization helpers, and packaged templates for remote hotline execution",
   "type": "module",
   "main": "./src/index.js",
