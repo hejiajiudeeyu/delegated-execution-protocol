@@ -241,6 +241,7 @@ export const ERROR_REGISTRY = Object.freeze({
   CONTRACT_ARTIFACT_CHECKSUM_MISMATCH: { retryable: false },
   CONTRACT_HOTLINE_VERSION_INVALID: { retryable: false },
   CONTRACT_RECONCILIATION_REPORT_INVALID: { retryable: false },
+  CONTRACT_INVALID_HEARTBEAT_STATUS: { retryable: false },
 
   OPS_SUPERVISOR_INTERNAL_ERROR: { retryable: true },
 
