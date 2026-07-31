@@ -9,6 +9,34 @@ const BUNDLED_TEMPLATES_ROOT = path.join(PACKAGE_ROOT, 'templates');
 const BUNDLED_PROTOCOL_DOCS_ROOT = path.join(PACKAGE_ROOT, 'protocol-docs');
 const BUNDLED_TEMPLATE_MANIFEST_PATH = path.join(BUNDLED_TEMPLATES_ROOT, 'manifest.json');
 
+// Minimal M1 shared slice (decision A-04): the four independent Call state
+// axes, their legal transitions, artifact descriptors, HotlineVersion binding
+// and reconciliation reports. Additive — nothing here changes v0.1.x behavior.
+export {
+  ACCEPTANCE_STATUS,
+  ARTIFACT_LIFECYCLE,
+  ARTIFACT_ROLE,
+  CALL_EVENT,
+  CALL_STATE_AXIS,
+  DELIVERY_INTEGRITY,
+  EXECUTION_STATUS,
+  RECOVERABILITY_CLASS,
+  SETTLEMENT_STATUS,
+  canTransition,
+  initialCallState,
+  isCallTerminal,
+  isExecutionTerminal,
+  legalTransitionsFor,
+  mayAutoRerun,
+  recoverabilityOf,
+  validateArtifactDescriptor,
+  validateCallState,
+  validateCallStateTransition,
+  validateDeliveryArtifacts,
+  validateHotlineVersionRef,
+  validateReconciliationReport
+} from './call-state.js';
+
 export const REQUEST_STATUS = {
   CREATED: 'CREATED',
   SENT: 'SENT',
@@ -203,6 +231,16 @@ export const ERROR_REGISTRY = Object.freeze({
   CALLER_NOT_REGISTERED: { retryable: false },
 
   RELAY_INTERNAL_ERROR: { retryable: true },
+  RELAY_UNAUTHORIZED: { retryable: false },
+  RELAY_FORBIDDEN: { retryable: false },
+  RELAY_LEASE_CONFLICT: { retryable: false },
+
+  CONTRACT_CALL_TRANSITION_INVALID: { retryable: false },
+  CONTRACT_CALL_STATE_INCOHERENT: { retryable: false },
+  CONTRACT_ARTIFACT_DESCRIPTOR_INVALID: { retryable: false },
+  CONTRACT_ARTIFACT_CHECKSUM_MISMATCH: { retryable: false },
+  CONTRACT_HOTLINE_VERSION_INVALID: { retryable: false },
+  CONTRACT_RECONCILIATION_REPORT_INVALID: { retryable: false },
 
   OPS_SUPERVISOR_INTERNAL_ERROR: { retryable: true },
 
