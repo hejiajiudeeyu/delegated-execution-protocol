@@ -634,7 +634,47 @@ Path 参数：
 }
 ```
 
-## 6.4 Caller 查询请求事件
+## 6.4 Responder 重启对账
+
+- 方法：`POST /v1/requests/{request_id}/reconcile`
+- 用途：Responder 进程中断重启后，收口那些**没有任何人观测到结局**的执行尝试（A-03）。
+
+与 6.3 的区别是根本性的：`events` 上报的是这个进程亲眼看到的结局，`reconcile` 上报的是"上一个进程死了，这次尝试的结局无人知晓"。因此本端点的语义被三条硬约束框死：
+
+1. **不得声称已交付**。`observed_execution` 取 `delivered` 一律 409 `RECONCILIATION_CANNOT_CLAIM_DELIVERY`——交付有自己的路径（签名结果包 + 已提交 artifact + checksum），对账不是它。允许对账声称交付，等于给中断的尝试开一条不用出示证据就能结算的后门。
+2. **不得结算**。对账只可能退款或维持原状，永远不会产生 debit。未知的工作不向 caller 收费。
+3. **必须签名**。报告以 Ed25519 签名，验签用 responder 已注册的公钥（含轮换前的旧公钥——崩在轮换途中的设备手里只有旧钥，它的尝试同样需要收口）。
+
+请求字段（Body）：
+- `report.call_id`（必填，须与路径中的 `request_id` 一致）
+- `report.attempt_id`（必填，标识这一次执行尝试；重跑会换新的 id）
+- `report.boot_id`（必填，发起该尝试的那个进程生命周期）
+- `report.observed_execution`（必填，须为终态且不得为 `delivered`）
+- `report.reconciled_by_boot_id` / `reconciled_at` / `reason` / `recoverability`（可选，供审计）
+- `signature.signature_algorithm`（`Ed25519`）、`signature.signature_base64`
+- 签名对象 = `report` 按 key 升序序列化后的 JSON 字节
+
+幂等性以 `attempt_id` 为准：同一尝试重复上报只移动一次资金。若该 Call 已经通过正常路径到达终态，对账仍会被记录（`superseded_by_existing_terminal: true`）用于审计，但不会重新定价。
+
+202 响应示例：
+```json
+{
+  "accepted": true,
+  "request_id": "018f9d5e-8bb2-7bc1-a4a3-1a8d9d8a2f41",
+  "billing_state": "refunded",
+  "superseded_by_existing_terminal": false,
+  "event": {
+    "event_type": "RECONCILED",
+    "actor_type": "responder",
+    "attempt_id": "attempt_9f2c",
+    "boot_id": "boot_a71e",
+    "observed_execution": "failed",
+    "reason": "interrupted_attempt_outcome_unobserved"
+  }
+}
+```
+
+## 6.5 Caller 查询请求事件
 
 - 方法：`GET /v1/requests/{request_id}/events`
 - 用途：Caller 轮询 ACK/完成态事件，减少盲等并获得控制面观测信息
