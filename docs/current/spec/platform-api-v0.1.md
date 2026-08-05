@@ -606,17 +606,23 @@ Path 参数：
 ## 6.3 Responder 状态事件上报
 
 - 方法：`POST /v1/requests/{request_id}/events`
-- 用途：Responder 上报轻量状态事件；v0.1 当前实现支持 `COMPLETED/FAILED`，`RUNNING/PROGRESS` 仍为后续扩展。
+- 用途：Responder 上报轻量状态事件。分两类：**终态事件** `COMPLETED|FAILED`（推动计费收口），与**观测事件** `PROGRESS|SOFT_TIMEOUT`（contracts `OBSERVATIONAL_REQUEST_EVENT`，只描述执行中的样子，永不推动状态轴、永不触碰资金）。
 
 请求字段（Body）：
 - `responder_id`
 - `hotline_id`
-- `event_type`（v0.1 当前实现：`FAILED|COMPLETED`；后续可扩展 `RUNNING|PROGRESS`）
-- `finished_at`（可选，ISO8601 UTC；未提供则服务端落库时间为准）
-- `status`（可选，建议 `ok|error`）
+- `event_type`（`FAILED|COMPLETED|PROGRESS|SOFT_TIMEOUT`）
+- `finished_at`（可选，ISO8601 UTC；仅终态事件；未提供则服务端落库时间为准）
+- `status`（可选，建议 `ok|error`；`SOFT_TIMEOUT` 用 `running`）
 - `error_code`（可选，仅失败时建议带）
-- `progress`（可选，后续扩展）
-- `message`（可选，后续扩展）
+- `progress`（`PROGRESS` 必填对象，schema 由 contracts `validateRequestProgress` 冻结：`seq` 非负整数（每 attempt 单调递增）、`stage` ∈ `input_fetching|executing|output_uploading`、`percent` 可选 0–100、`message` 可选 ≤280 字符、`attempt_id` 可选；未知键拒绝）
+- `message`（可选，`SOFT_TIMEOUT` 用于说明仍在运行）
+
+观测事件的服务端语义：
+- 执行已达终态后到达的观测事件返回 409（迟到的进度不落盘）；
+- `PROGRESS` 以 `(responder_id, attempt_id, seq)` 幂等去重，重复上报返回 202 `deduped: true`；
+- 服务端对每个请求仅保留最近 N 条 `PROGRESS`（默认 50，可配），修剪只作用于 `PROGRESS`，终态与生命周期事件不受影响；
+- 观测事件不进入执行状态投影：执行轴仍只由 `ACKED/COMPLETED/FAILED/...` 等迁移事件驱动。
 
 202 响应示例：
 ```json

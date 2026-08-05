@@ -4,10 +4,14 @@ import {
   ACCEPTANCE_STATUS,
   ARTIFACT_LIFECYCLE,
   ARTIFACT_ROLE,
+  CALL_EVENT,
   CALL_STATE_AXIS,
   DELIVERY_INTEGRITY,
   EXECUTION_STATUS,
+  OBSERVATIONAL_REQUEST_EVENT,
   RECOVERABILITY_CLASS,
+  REQUEST_PROGRESS_MESSAGE_MAX_LENGTH,
+  REQUEST_PROGRESS_STAGE,
   SETTLEMENT_STATUS,
   canTransition,
   initialCallState,
@@ -21,7 +25,8 @@ import {
   validateCallStateTransition,
   validateDeliveryArtifacts,
   validateHotlineVersionRef,
-  validateReconciliationReport
+  validateReconciliationReport,
+  validateRequestProgress
 } from "@delexec/contracts";
 
 describe("call state axes", () => {
@@ -342,5 +347,58 @@ describe("reconciliation reports", () => {
     const result = validateReconciliationReport({ ...report(), observed_execution: EXECUTION_STATUS.EXECUTING });
     expect(result.valid).toBe(false);
     expect(result.errors).toContain("reconciliation must report a terminal execution status");
+  });
+});
+
+describe("observational request events", () => {
+  const progress = (overrides = {}) => ({
+    seq: 3,
+    stage: REQUEST_PROGRESS_STAGE.EXECUTING,
+    percent: 40,
+    message: "page 4 of 10",
+    attempt_id: "attempt_abc",
+    ...overrides
+  });
+
+  it("keeps observational events out of the CALL_EVENT transition vocabulary", () => {
+    // Progress is an observation, not a fifth axis: nothing here may ever be
+    // read back into the execution projection.
+    for (const value of Object.values(OBSERVATIONAL_REQUEST_EVENT)) {
+      expect(Object.values(CALL_EVENT)).not.toContain(value);
+    }
+  });
+
+  it("accepts a full and a minimal progress payload", () => {
+    expect(validateRequestProgress(progress()).valid).toBe(true);
+    expect(validateRequestProgress({ seq: 0, stage: REQUEST_PROGRESS_STAGE.INPUT_FETCHING }).valid).toBe(true);
+  });
+
+  it("requires a non-negative integer seq and a known stage", () => {
+    expect(validateRequestProgress(progress({ seq: -1 })).errors).toContain(
+      "progress.seq must be a non-negative integer"
+    );
+    expect(validateRequestProgress(progress({ seq: 1.5 })).valid).toBe(false);
+    const { seq, ...withoutSeq } = progress();
+    expect(validateRequestProgress(withoutSeq).valid).toBe(false);
+    expect(seq).toBeDefined();
+    expect(validateRequestProgress(progress({ stage: "reticulating" })).valid).toBe(false);
+  });
+
+  it("bounds percent to 0-100 and message to the declared maximum", () => {
+    expect(validateRequestProgress(progress({ percent: 101 })).valid).toBe(false);
+    expect(validateRequestProgress(progress({ percent: -0.1 })).valid).toBe(false);
+    expect(validateRequestProgress(progress({ percent: 100 })).valid).toBe(true);
+    expect(
+      validateRequestProgress(progress({ message: "x".repeat(REQUEST_PROGRESS_MESSAGE_MAX_LENGTH + 1) })).valid
+    ).toBe(false);
+    expect(
+      validateRequestProgress(progress({ message: "x".repeat(REQUEST_PROGRESS_MESSAGE_MAX_LENGTH) })).valid
+    ).toBe(true);
+  });
+
+  it("rejects unknown fields so progress cannot become an open side channel", () => {
+    const result = validateRequestProgress(progress({ output_preview: "base64..." }));
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain("progress.output_preview is not an allowed field");
   });
 });

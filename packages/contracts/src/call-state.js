@@ -495,3 +495,77 @@ export function validateReconciliationReport(report) {
   );
   return { valid: errors.length === 0, errors };
 }
+
+// ------------------------------------------- observational request events
+
+// Wire-level events a Responder may append to a Call it is executing, beyond
+// the terminal COMPLETED/FAILED pair. These are observations, not state
+// transitions — deliberately NOT part of CALL_EVENT, because progress is not
+// a fifth axis and must never feed the execution projection or settlement.
+export const OBSERVATIONAL_REQUEST_EVENT = Object.freeze({
+  PROGRESS: 'PROGRESS',
+  SOFT_TIMEOUT: 'SOFT_TIMEOUT'
+});
+
+export const REQUEST_PROGRESS_STAGE = Object.freeze({
+  INPUT_FETCHING: 'input_fetching',
+  EXECUTING: 'executing',
+  OUTPUT_UPLOADING: 'output_uploading'
+});
+
+export const REQUEST_PROGRESS_MESSAGE_MAX_LENGTH = 280;
+const REQUEST_PROGRESS_ATTEMPT_ID_MAX_LENGTH = 128;
+
+// Everything a progress payload may carry. Unknown keys are rejected rather
+// than passed through: an open detail bag on an unauthenticated-feeling
+// "just telemetry" path is how side channels are born.
+const REQUEST_PROGRESS_ALLOWED_KEYS = Object.freeze(['seq', 'stage', 'percent', 'message', 'attempt_id']);
+
+export function validateRequestProgress(progress) {
+  const errors = [];
+  if (!isObject(progress)) {
+    return { valid: false, errors: ['progress must be an object'] };
+  }
+
+  pushIf(errors, !isNonNegativeInteger(progress.seq), 'progress.seq must be a non-negative integer');
+  pushIf(
+    errors,
+    !Object.values(REQUEST_PROGRESS_STAGE).includes(progress.stage),
+    `progress.stage must be one of ${Object.values(REQUEST_PROGRESS_STAGE).join(', ')}`
+  );
+
+  if (progress.percent !== undefined && progress.percent !== null) {
+    pushIf(
+      errors,
+      typeof progress.percent !== 'number' || Number.isNaN(progress.percent) || progress.percent < 0 || progress.percent > 100,
+      'progress.percent must be a number between 0 and 100'
+    );
+  }
+
+  if (progress.message !== undefined && progress.message !== null) {
+    pushIf(errors, typeof progress.message !== 'string', 'progress.message must be a string');
+    pushIf(
+      errors,
+      typeof progress.message === 'string' && progress.message.length > REQUEST_PROGRESS_MESSAGE_MAX_LENGTH,
+      `progress.message must be at most ${REQUEST_PROGRESS_MESSAGE_MAX_LENGTH} characters`
+    );
+  }
+
+  if (progress.attempt_id !== undefined && progress.attempt_id !== null) {
+    pushIf(
+      errors,
+      !isNonEmptyString(progress.attempt_id) || progress.attempt_id.length > REQUEST_PROGRESS_ATTEMPT_ID_MAX_LENGTH,
+      `progress.attempt_id must be a non-empty string of at most ${REQUEST_PROGRESS_ATTEMPT_ID_MAX_LENGTH} characters`
+    );
+  }
+
+  for (const key of Object.keys(progress)) {
+    pushIf(
+      errors,
+      !REQUEST_PROGRESS_ALLOWED_KEYS.includes(key),
+      `progress.${key} is not an allowed field`
+    );
+  }
+
+  return { valid: errors.length === 0, errors };
+}

@@ -20,7 +20,10 @@ export {
   CALL_STATE_AXIS,
   DELIVERY_INTEGRITY,
   EXECUTION_STATUS,
+  OBSERVATIONAL_REQUEST_EVENT,
   RECOVERABILITY_CLASS,
+  REQUEST_PROGRESS_MESSAGE_MAX_LENGTH,
+  REQUEST_PROGRESS_STAGE,
   SETTLEMENT_STATUS,
   canTransition,
   initialCallState,
@@ -34,7 +37,8 @@ export {
   validateCallStateTransition,
   validateDeliveryArtifacts,
   validateHotlineVersionRef,
-  validateReconciliationReport
+  validateReconciliationReport,
+  validateRequestProgress
 } from './call-state.js';
 
 export const REQUEST_STATUS = {
@@ -126,6 +130,8 @@ export const ERROR_REGISTRY = Object.freeze({
   CONTRACT_INVALID_DELIVERY_META_REQUEST: { retryable: false },
   CONTRACT_INVALID_ACK_REQUEST: { retryable: false },
   CONTRACT_INVALID_REQUEST_EVENT: { retryable: false },
+  CONTRACT_INVALID_PROGRESS: { retryable: false },
+  CONTRACT_EXECUTION_TERMINAL: { retryable: false },
   CONTRACT_INVALID_METRIC_EVENT: { retryable: false },
   CONTRACT_INVALID_ROLE_GRANT: { retryable: false },
   CONTRACT_INVALID_API_KEY_REVOKE: { retryable: false },
