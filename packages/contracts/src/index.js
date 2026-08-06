@@ -20,15 +20,22 @@ export {
   CALL_STATE_AXIS,
   DELIVERY_INTEGRITY,
   EXECUTION_STATUS,
+  HOTLINE_VERSION_CONTRACT_FIELDS,
+  HOTLINE_VERSION_DIGEST_ALGORITHM,
   OBSERVATIONAL_REQUEST_EVENT,
   RECOVERABILITY_CLASS,
   REQUEST_PROGRESS_MESSAGE_MAX_LENGTH,
   REQUEST_PROGRESS_STAGE,
   SETTLEMENT_STATUS,
   canTransition,
+  canonicalJsonString,
+  canonicalizeHotlineVersion,
+  hotlineVersionDigest,
+  hotlineVersionRefOf,
   initialCallState,
   isCallTerminal,
   isExecutionTerminal,
+  isHotlineVersionDigest,
   legalTransitionsFor,
   mayAutoRerun,
   recoverabilityOf,
@@ -36,9 +43,11 @@ export {
   validateCallState,
   validateCallStateTransition,
   validateDeliveryArtifacts,
+  validateHotlineVersion,
   validateHotlineVersionRef,
   validateReconciliationReport,
-  validateRequestProgress
+  validateRequestProgress,
+  verifyHotlineVersionDigest
 } from './call-state.js';
 
 export const REQUEST_STATUS = {

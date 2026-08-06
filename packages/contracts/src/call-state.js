@@ -10,6 +10,8 @@
 // What deliberately stays out: relay leases, scheduler jobs, retry counters,
 // object-storage keys, UI filters. Those are platform-private.
 
+import crypto from 'node:crypto';
+
 const isObject = (value) => typeof value === 'object' && value !== null && !Array.isArray(value);
 const isNonEmptyString = (value) => typeof value === 'string' && value.trim().length > 0;
 const isNonNegativeInteger = (value) => Number.isInteger(value) && value >= 0;
@@ -348,7 +350,182 @@ export function validateHotlineVersionRef(ref) {
       'hotline_version.recoverability is unsupported'
     );
   }
+  // A digest is optional in the ref, but a malformed one must not pass: a ref
+  // carrying an unverifiable digest is worse than one carrying none, because
+  // it looks like the binding was checked.
+  if (ref.digest !== undefined && ref.digest !== null) {
+    pushIf(errors, !isHotlineVersionDigest(ref.digest), 'hotline_version.digest must be sha256:<64 hex chars>');
+  }
   return { valid: errors.length === 0, errors };
+}
+
+// ------------------------------------------------- immutable HotlineVersion
+//
+// FR-014 says a Call pins an immutable HotlineVersion. `validateHotlineVersionRef`
+// above describes the pointer; this section describes the thing pointed at and,
+// more importantly, makes its immutability CHECKABLE rather than promised.
+//
+// Why a digest and not just a version number: the platform stores versions in
+// the same mutable snapshot as everything else. A number alone cannot tell you
+// whether the record behind it was edited after a Call bound to it — and "the
+// contract changed under a running call" is precisely the failure FR-014 names.
+// With a content digest, both parties can ask the question and get an answer.
+
+export const HOTLINE_VERSION_DIGEST_ALGORITHM = 'sha256';
+
+// The fields that constitute the published promise. A version freezes the whole
+// published document rather than a chosen "semantic" subset: arguing about
+// which field is semantic is how a field that mattered ends up outside the
+// freeze. Anything not listed here is platform-private or identity, not contract.
+export const HOTLINE_VERSION_CONTRACT_FIELDS = Object.freeze([
+  'hotline_id',
+  'display_name',
+  'description',
+  'summary',
+  'task_types',
+  'service_id',
+  'tags',
+  'input_schema',
+  'output_schema',
+  'input_attachments',
+  'output_attachments',
+  'input_examples',
+  'output_examples',
+  'input_summary',
+  'output_summary',
+  'recommended_for',
+  'not_recommended_for',
+  'limitations',
+  'pricing_hint',
+  'recoverability'
+]);
+
+const HEX64 = /^[0-9a-f]{64}$/;
+
+export function isHotlineVersionDigest(value) {
+  if (typeof value !== 'string') {
+    return false;
+  }
+  const [algorithm, hex] = value.split(':');
+  return algorithm === HOTLINE_VERSION_DIGEST_ALGORITHM && HEX64.test(hex || '');
+}
+
+/**
+ * Deterministic JSON: object keys sorted at every depth, `undefined` dropped.
+ *
+ * Plain JSON.stringify preserves insertion order, so two services holding the
+ * same contract can produce different bytes and therefore different digests.
+ * A digest that depends on who computed it cannot answer "is this the same
+ * contract", which is the only question it exists to answer.
+ */
+export function canonicalJsonString(value) {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (value === null || typeof value !== 'object') {
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => canonicalJsonString(item) ?? 'null').join(',')}]`;
+  }
+  const parts = [];
+  for (const key of Object.keys(value).sort()) {
+    const encoded = canonicalJsonString(value[key]);
+    if (encoded !== undefined) {
+      parts.push(`${JSON.stringify(key)}:${encoded}`);
+    }
+  }
+  return `{${parts.join(',')}}`;
+}
+
+/** The contract fields of a published hotline, in canonical form. */
+export function canonicalizeHotlineVersion(contract = {}) {
+  const canonical = {};
+  for (const field of HOTLINE_VERSION_CONTRACT_FIELDS) {
+    if (contract[field] !== undefined) {
+      canonical[field] = contract[field];
+    }
+  }
+  return canonical;
+}
+
+export function hotlineVersionDigest(contract = {}) {
+  const canonical = canonicalJsonString(canonicalizeHotlineVersion(contract)) ?? '{}';
+  const hex = crypto.createHash(HOTLINE_VERSION_DIGEST_ALGORITHM).update(canonical, 'utf8').digest('hex');
+  return `${HOTLINE_VERSION_DIGEST_ALGORITHM}:${hex}`;
+}
+
+/**
+ * Validate a frozen HotlineVersion document.
+ *
+ * `version` is a string because the protocol must not care how a platform
+ * numbers its versions; it must only care that the value is stable and that
+ * the digest matches the content it claims to describe.
+ */
+export function validateHotlineVersion(version) {
+  const errors = [];
+  if (!isObject(version)) {
+    return { valid: false, errors: ['hotline_version document must be an object'] };
+  }
+  pushIf(errors, !isNonEmptyString(version.hotline_id), 'hotline_id is required');
+  pushIf(errors, !isNonEmptyString(version.version), 'version is required');
+  pushIf(errors, !isNonEmptyString(version.published_at), 'published_at is required');
+  pushIf(errors, !isObject(version.contract), 'contract is required');
+
+  if (isObject(version.contract)) {
+    pushIf(
+      errors,
+      version.contract.hotline_id !== undefined && version.contract.hotline_id !== version.hotline_id,
+      'contract.hotline_id must match hotline_id'
+    );
+    pushIf(errors, !isObject(version.contract.input_schema), 'contract.input_schema is required');
+    pushIf(errors, !isObject(version.contract.output_schema), 'contract.output_schema is required');
+    if (version.contract.recoverability !== undefined && version.contract.recoverability !== null) {
+      pushIf(
+        errors,
+        !Object.values(RECOVERABILITY_CLASS).includes(version.contract.recoverability),
+        'contract.recoverability is unsupported'
+      );
+    }
+  }
+
+  if (!isHotlineVersionDigest(version.digest)) {
+    errors.push('digest must be sha256:<64 hex chars>');
+  } else if (isObject(version.contract) && hotlineVersionDigest(version.contract) !== version.digest) {
+    // The whole point: a version whose digest does not match its own content
+    // is not a frozen contract, it is an edited one wearing a version number.
+    errors.push('digest does not match contract content');
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+/**
+ * Does this frozen version still describe the contract it claims to?
+ * Callers use it to detect a version record edited in place after a Call bound
+ * to it — the tamper case a version number alone cannot see.
+ */
+export function verifyHotlineVersionDigest(version) {
+  if (!isObject(version) || !isObject(version.contract) || !isHotlineVersionDigest(version.digest)) {
+    return { valid: false, errors: ['hotline_version document is not verifiable'] };
+  }
+  const actual = hotlineVersionDigest(version.contract);
+  return actual === version.digest
+    ? { valid: true, errors: [] }
+    : { valid: false, errors: [`digest mismatch: content hashes to ${actual}`] };
+}
+
+/** The pointer a Call stores, derived from the frozen version it bound to. */
+export function hotlineVersionRefOf(version) {
+  if (!isObject(version)) {
+    return null;
+  }
+  return {
+    hotline_id: version.hotline_id,
+    version: version.version,
+    digest: version.digest,
+    recoverability: recoverabilityOf(version.contract || {})
+  };
 }
 
 export function recoverabilityOf(ref) {
