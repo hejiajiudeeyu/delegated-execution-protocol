@@ -50,6 +50,9 @@ export {
   verifyHotlineVersionDigest
 } from './call-state.js';
 
+// What makes a declared Hotline a contract (FR-010, FR-013).
+export { validateHotlineContract, validateHotlineExamples } from './hotline-contract.js';
+
 export const REQUEST_STATUS = {
   CREATED: 'CREATED',
   SENT: 'SENT',
@@ -142,6 +145,10 @@ export const ERROR_REGISTRY = Object.freeze({
   CONTRACT_INVALID_PROGRESS: { retryable: false },
   CONTRACT_EXECUTION_TERMINAL: { retryable: false },
   CONTRACT_INVALID_ALERT_CONFIG: { retryable: false },
+  // A declaration that cannot be published as a contract: missing schemas,
+  // missing worked examples, no stated limits, or examples its own schema
+  // rejects (FR-010, FR-013).
+  CONTRACT_HOTLINE_INCOMPLETE: { retryable: false },
   CONTRACT_INVALID_METRIC_EVENT: { retryable: false },
   CONTRACT_INVALID_ROLE_GRANT: { retryable: false },
   CONTRACT_INVALID_API_KEY_REVOKE: { retryable: false },

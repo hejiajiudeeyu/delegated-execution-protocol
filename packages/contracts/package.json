@@ -1,6 +1,6 @@
 {
   "name": "@delexec/contracts",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Protocol enums, error registry, canonicalization helpers, and packaged templates for remote hotline execution",
   "type": "module",
   "main": "./src/index.js",
@@ -37,5 +37,8 @@
     "contracts",
     "hotline",
     "delegated-execution"
-  ]
+  ],
+  "dependencies": {
+    "ajv": "^8.17.1"
+  }
 }
