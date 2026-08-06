@@ -132,6 +132,7 @@ export const ERROR_REGISTRY = Object.freeze({
   CONTRACT_INVALID_REQUEST_EVENT: { retryable: false },
   CONTRACT_INVALID_PROGRESS: { retryable: false },
   CONTRACT_EXECUTION_TERMINAL: { retryable: false },
+  CONTRACT_INVALID_ALERT_CONFIG: { retryable: false },
   CONTRACT_INVALID_METRIC_EVENT: { retryable: false },
   CONTRACT_INVALID_ROLE_GRANT: { retryable: false },
   CONTRACT_INVALID_API_KEY_REVOKE: { retryable: false },
