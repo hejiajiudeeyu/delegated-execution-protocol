@@ -25,6 +25,8 @@
 - `isRetryableErrorCode(code, fallback?)`
 - `buildStructuredError(code, message, options?)`
 - `canonicalizeResultPackageForSignature(result)`
+- `DELIVERY_INTEGRITY_CODE`
+- `validateDeliveredOutput(contract, result)`
 - `validatePricingHint(pricingHint)`
 - `validateTaskBillingClaims(billing, pricingHint)`
 - `validateBillingUsage(usage, pricingHint, billing)`
@@ -39,7 +41,7 @@
 
 - 错误代码及其默认的可重试性语义被视为协议表面
 - 请求生命周期状态被视为协议表面
-- 用于签名的结果包规范化被视为协议表面
+- 用于签名的结果包规范化被视为协议表面。canonical 字段表**只增不改**：结果里没有的 key，canonical 形式里也没有，因此字段出现之前签下的签名逐字节仍然有效。该性质只在「旧签名方 / 新校验方」方向成立——必须先发布本包、让所有校验方升级，才允许任何签名方开始输出新进入 canonical 表的字段
 - hotline `pricing_hint`、caller token `billing`、以及具备 billing 语义的 result `usage` helper 被视为 paid-call 实现的增量协议表面
 - 模板打包格式被视为协议表面
 

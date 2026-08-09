@@ -20,6 +20,8 @@ Stable protocol exports in this package:
 - `isRetryableErrorCode(code, fallback?)`
 - `buildStructuredError(code, message, options?)`
 - `canonicalizeResultPackageForSignature(result)`
+- `DELIVERY_INTEGRITY_CODE`
+- `validateDeliveredOutput(contract, result)`
 - `validatePricingHint(pricingHint)`
 - `validateTaskBillingClaims(billing, pricingHint)`
 - `validateBillingUsage(usage, pricingHint, billing)`
@@ -34,7 +36,7 @@ Protocol-facing stability commitments:
 
 - error codes and their default retryability semantics are treated as protocol surface
 - request lifecycle states are treated as protocol surface
-- result-package canonicalization for signing is treated as protocol surface
+- result-package canonicalization for signing is treated as protocol surface. The canonical field list grows **additively**: a key absent from a result is absent from its canonical form, so signatures produced before a field existed still verify byte-for-byte. This only holds in the old-signer/new-verifier direction — release this package and upgrade every verifier before any signer starts emitting a newly canonical field
 - hotline `pricing_hint`, caller token `billing`, and billing-aware result `usage` helpers are treated as additive protocol surface for paid-call implementations
 - template packaging format is treated as protocol surface
 

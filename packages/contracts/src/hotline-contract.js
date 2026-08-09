@@ -102,6 +102,154 @@ export function validateHotlineExamples(contract = {}) {
   return { valid: errors.length === 0, errors };
 }
 
+// ------------------------------------------------- delivery integrity (FR-040)
+//
+// Whether an output actually satisfies the contract the Call pinned.
+//
+// Until M3 `schema_valid` was whatever the executor put in its own result
+// object — the Responder asserted its work was valid and every other party
+// took the assertion at face value, including the platform, which then paid
+// for it. The one party being paid was the only party judging whether the work
+// was done. This is the check that can fail.
+//
+// Deliberately shared by both sides. The Responder runs it before signing so a
+// failure is caught where it can still be described honestly, and the platform
+// runs it again on the pinned contract, because "the Responder says it checked"
+// is the exact class of claim this replaces.
+
+export const DELIVERY_INTEGRITY_CODE = Object.freeze({
+  OUTPUT_SCHEMA_VIOLATION: 'output_schema_violation',
+  OUTPUT_MISSING: 'output_missing',
+  SCHEMA_UNUSABLE: 'output_schema_unusable',
+  REQUIRED_ARTIFACT_MISSING: 'required_artifact_missing'
+});
+
+/**
+ * Check a result's output against the output_schema of the contract version the
+ * Call is bound to.
+ *
+ * Returns `{ valid, errors, unchecked }`. Each error names the offending field,
+ * so a Responder can say what was wrong with its own output rather than only
+ * that something was.
+ *
+ * `unchecked` is the part that keeps this honest. There are situations where
+ * neither verdict is true — a contract that declares no output_schema, a
+ * failure that was never required to look like a success, artifacts that do not
+ * say which role they fill. Calling those valid would be a lie, and calling
+ * them violations would fail deliveries that are in fact complete. They are
+ * neither: each one is named here, and the platform grades accordingly. A pass
+ * with an empty `unchecked` is the only pass that means everything was checked.
+ */
+export function validateDeliveredOutput(contract = {}, result = {}) {
+  const errors = [];
+  const unchecked = [];
+
+  // A failure is not required to look like a success — but it must not be
+  // gradeable as a verified delivery either, because nothing was delivered.
+  if (result?.status === 'error') {
+    unchecked.push({
+      aspect: 'output_schema',
+      reason: 'result reports an error; a failure is not judged against the output schema'
+    });
+    return { valid: true, errors, unchecked };
+  }
+
+  const schema = contract?.output_schema;
+  if (!isObject(schema)) {
+    // Every hotline published before the publication gate existed is in this
+    // state. The caller gets a lower integrity grade, not a violation.
+    unchecked.push({ aspect: 'output_schema', reason: 'contract declares no output_schema' });
+  }
+
+  let schemaChecked = false;
+  if (isObject(schema)) {
+    const compiled = compileSchema(schema);
+    if (!compiled.validate) {
+      // The contract is at fault here, not the delivery. Saying so points
+      // whoever reads this at the party who can actually fix it.
+      errors.push({
+        field: null,
+        code: DELIVERY_INTEGRITY_CODE.SCHEMA_UNUSABLE,
+        message: `output_schema is not a usable JSON Schema: ${compiled.error}`
+      });
+    } else if (!('output' in result) || result.output === null || result.output === undefined) {
+      errors.push({
+        field: null,
+        code: DELIVERY_INTEGRITY_CODE.OUTPUT_MISSING,
+        message: 'result claims success but carries no output to check'
+      });
+    } else {
+      schemaChecked = compiled.validate(result.output);
+      if (!schemaChecked) {
+        for (const error of (compiled.validate.errors || []).slice(0, 10)) {
+          const field = (error.instancePath || '')
+            .split('/')
+            .filter(Boolean)
+            .join('.');
+          errors.push({
+            field: field || (error.params?.missingProperty ?? null),
+            code: DELIVERY_INTEGRITY_CODE.OUTPUT_SCHEMA_VIOLATION,
+            message: `${field || error.params?.missingProperty || 'output'} ${error.message}`
+          });
+        }
+        // `valid` is computed from the verdict below rather than from the error
+        // list, so a validator that rejects without explaining itself cannot
+        // produce a pass. Silently passing is the one thing this function must
+        // never do — it is the failure it exists to replace.
+        if (errors.length === 0) {
+          errors.push({
+            field: null,
+            code: DELIVERY_INTEGRITY_CODE.OUTPUT_SCHEMA_VIOLATION,
+            message: 'output does not satisfy output_schema'
+          });
+        }
+      }
+    }
+  }
+
+  // A contract may require a FILE, not just well-formed JSON — for a document
+  // hotline that is its most load-bearing sentence. Result artifacts say which
+  // contract role they fill in `contract_role`; note this is a different
+  // vocabulary from an artifact DESCRIPTOR's `role` (ARTIFACT_ROLE:
+  // input/output/evidence), which describes the direction bytes travel, not
+  // the promise they keep.
+  const requiredRoles = Array.isArray(contract?.output_attachments?.file_roles)
+    ? contract.output_attachments.file_roles
+        .filter((entry) => entry?.required && isNonEmptyString(entry?.role))
+        .map((entry) => entry.role)
+    : [];
+
+  if (requiredRoles.length > 0) {
+    const artifacts = Array.isArray(result.artifacts) ? result.artifacts : [];
+    const declared = new Set(
+      artifacts.map((artifact) => artifact?.contract_role).filter((role) => isNonEmptyString(role))
+    );
+
+    if (artifacts.length > 0 && declared.size === 0) {
+      // Artifacts arrived but none says what it is for. This is the shape every
+      // Responder produced before M3. Failing it would fail complete
+      // deliveries; passing it silently would let any Responder skip this check
+      // forever by declining to answer. So: named, and graded lower.
+      unchecked.push({
+        aspect: 'required_artifacts',
+        reason: 'result artifacts do not declare which contract role they fill'
+      });
+    } else {
+      for (const role of requiredRoles) {
+        if (!declared.has(role)) {
+          errors.push({
+            field: `artifacts.${role}`,
+            code: DELIVERY_INTEGRITY_CODE.REQUIRED_ARTIFACT_MISSING,
+            message: `contract requires an output artifact with role "${role}"`
+          });
+        }
+      }
+    }
+  }
+
+  return { valid: errors.length === 0, errors, unchecked };
+}
+
 // ------------------------------------ service tier, privacy, fulfillment mode
 //
 // FR-011 / FR-012 and owner decision D8.2, all three declared on the contract

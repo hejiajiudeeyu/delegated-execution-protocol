@@ -67,6 +67,8 @@ export {
   privacyModeOf,
   serviceTermsOf,
   serviceTierOf,
+  DELIVERY_INTEGRITY_CODE,
+  validateDeliveredOutput,
   validateHotlineContract,
   validateHotlineExamples,
   validateHotlineServiceTerms
@@ -527,6 +529,23 @@ export function validateBillingUsage(usage, pricingHint, billing, options = {}) 
   return { valid: errors.length === 0, errors };
 }
 
+/**
+ * The bytes a Responder signs.
+ *
+ * `hotline_version` joined this list in M3. A signed result used to say which
+ * hotline it came from but never which CONTRACT it claims to satisfy, so a
+ * result produced under v1 was cryptographically indistinguishable from one
+ * produced under v2 — and FR-040 has to judge an output against the contract
+ * the Call actually pinned. A signature that cannot name the promise it is
+ * keeping cannot be used to check whether the promise was kept.
+ *
+ * Additive on purpose: a key absent from the result is absent from the
+ * canonical form, so a result signed by a Responder that predates this still
+ * verifies byte-for-byte. It simply carries less to check, which is a lower
+ * integrity grade rather than an invalid signature — refusing to verify every
+ * older Responder would be this change breaking delivery in order to describe
+ * it better.
+ */
 export function canonicalizeResultPackageForSignature(result = {}) {
   const canonical = {};
 
@@ -536,6 +555,7 @@ export function canonicalizeResultPackageForSignature(result = {}) {
     'result_version',
     'responder_id',
     'hotline_id',
+    'hotline_version',
     'verification',
     'status',
     'output',
