@@ -92,6 +92,35 @@
 | `responder_identity_cardinality` | `one_responder_per_user` | FROZEN | v0.1 一个 user 仅绑定一个 responder_id |
 | `catalog_submission_mode` | `platform_onboarding_api_with_dual_admin_review` | FROZEN | 当前通过 `POST /v2/hotlines` 提交 responder/hotline，上架前要求 responder 与 hotline 双审批 |
 
+## 6.1) 服务条款（档位 / 隐私 / 履约模式）
+
+FR-011 / FR-012 与 owner 决策 D8.2。三项都写在 Hotline 契约里，随冻结版本一起进 Call 快照。
+M2 只让它们「说得出、冻得住」；验收窗真正开始生效在 M3——在那之前没有可失败的地方。
+
+| 参数 | 建议值 | 状态 | 说明 |
+|---|---:|---|---|
+| `service_tier` | `quick` \| `standard` \| `deep` | PROVISIONAL | 未声明按 `standard` 解析；不写入既有记录 |
+| `acceptance_window_s`(quick) | `86400` | PROVISIONAL | A-05 |
+| `acceptance_window_s`(standard) | `259200` | PROVISIONAL | A-05 网络默认 72h |
+| `acceptance_window_s`(deep) | `604800` | PROVISIONAL | A-05 |
+| `acceptance_window_min_s` | `86400` | PROVISIONAL | 显式声明的窗口下界 |
+| `acceptance_window_max_s` | `604800` | PROVISIONAL | 显式声明的窗口上界 |
+| `privacy_mode` | `supervised` | PROVISIONAL | 本阶段唯一可运行的模式 |
+| `fulfillment_mode` | `auto` \| `confirm` | PROVISIONAL | 未声明按 `auto` 解析（D8.2） |
+
+约束：
+
+- 显式 `acceptance_window_s` 优先于档位默认值——档位是简写，不是权威；但必须落在上下界内，
+  **越界即拒绝发布，不做静默夹取**：被悄悄改过的窗口就是被悄悄改过的承诺。
+- `privacy_mode` 声明 `sealed` **直接拒绝**，不降级为 `supervised` 执行。接受声明再按监督模式跑，
+  等于告诉发布者数据被隔离了而事实并非如此——这是本区域唯一绝不能沉默的失败。
+  `sealed` 与一个根本不存在的模式返回不同的错误：前者是本部署无法履行的真实模式，后者是拼错。
+- 三项都是可选的，缺省即默认值。发布门不重新校验已批准的热线，新增必填字段会把目录切成
+  「还能重新发布」与「不能重新发布」两半，而没有人做过这个决定。
+- **不得把默认值写进既有记录**：那会改变内容摘要，已经绑定该版本的 Call 随即报 `digest_mismatch`。
+  默认值在读取时解析（`serviceTierOf` / `privacyModeOf` / `fulfillmentModeOf`），永不落盘。
+
+
 ## 7) 核心参数确认结果
 
 以下 8 项已确认并冻结（可直接进入实现）：

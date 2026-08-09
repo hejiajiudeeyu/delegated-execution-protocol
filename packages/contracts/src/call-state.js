@@ -397,7 +397,18 @@ export const HOTLINE_VERSION_CONTRACT_FIELDS = Object.freeze([
   'not_recommended_for',
   'limitations',
   'pricing_hint',
-  'recoverability'
+  'recoverability',
+  // FR-011 / FR-012 (M2 units 4-5). Adding names here is digest-safe: a
+  // contract that does not carry a field is canonicalized without it, so every
+  // version frozen before these existed still hashes to the digest it was
+  // published with. What is NOT safe is writing a default onto an existing
+  // record — that changes its content, and a Call already bound to it would
+  // then see `digest_mismatch`. Defaults are resolved when read
+  // (`serviceTierOf`, `privacyModeOf`, `fulfillmentModeOf`), never persisted.
+  'service_tier',
+  'acceptance_window_s',
+  'privacy_mode',
+  'fulfillment_mode'
 ]);
 
 const HEX64 = /^[0-9a-f]{64}$/;

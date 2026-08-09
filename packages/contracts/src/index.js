@@ -50,8 +50,27 @@ export {
   verifyHotlineVersionDigest
 } from './call-state.js';
 
-// What makes a declared Hotline a contract (FR-010, FR-013).
-export { validateHotlineContract, validateHotlineExamples } from './hotline-contract.js';
+// What makes a declared Hotline a contract (FR-010, FR-013), and the service
+// terms it commits to (FR-011, FR-012, D8.2).
+export {
+  ACCEPTANCE_WINDOW_BOUNDS_S,
+  DEFAULT_FULFILLMENT_MODE,
+  DEFAULT_PRIVACY_MODE,
+  DEFAULT_SERVICE_TIER,
+  FULFILLMENT_MODE,
+  PRIVACY_MODE,
+  SERVICE_TIER,
+  SERVICE_TIER_ACCEPTANCE_WINDOW_S,
+  SUPPORTED_PRIVACY_MODES,
+  acceptanceWindowSecondsOf,
+  fulfillmentModeOf,
+  privacyModeOf,
+  serviceTermsOf,
+  serviceTierOf,
+  validateHotlineContract,
+  validateHotlineExamples,
+  validateHotlineServiceTerms
+} from './hotline-contract.js';
 
 export const REQUEST_STATUS = {
   CREATED: 'CREATED',
