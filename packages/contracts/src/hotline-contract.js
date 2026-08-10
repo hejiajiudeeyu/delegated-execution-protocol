@@ -277,6 +277,32 @@ export const SERVICE_TIER_ACCEPTANCE_WINDOW_S = Object.freeze({
   [SERVICE_TIER.DEEP]: 7 * 24 * 60 * 60
 });
 
+// How long the work itself may take, from dispatch to a delivered result.
+//
+// FR-025. Three clocks used to run this call and none of them knew about the
+// others: the caller's own hard timeout, the platform's task-token TTL (which
+// doubles as the billing hold's expiry), and the responder's per-hotline hard
+// timeout. All three defaulted to about five minutes, and a real MinerU parse
+// takes about four with a cold model — so the first real production call died
+// on whichever clock fired first, and raising one of them only changed which
+// error came back.
+//
+// A hotline declares how long its work needs. Everyone else derives from it.
+// The tier defaults are sized for what each tier is actually for, not for what
+// a request/response API usually assumes: quick work is interactive, deep work
+// is the kind you go away from.
+export const SERVICE_TIER_EXECUTION_BUDGET_S = Object.freeze({
+  [SERVICE_TIER.QUICK]: 5 * 60,
+  [SERVICE_TIER.STANDARD]: 30 * 60,
+  [SERVICE_TIER.DEEP]: 4 * 60 * 60
+});
+
+/** Network bounds an explicit per-version budget must sit inside. */
+export const EXECUTION_BUDGET_BOUNDS_S = Object.freeze({
+  MIN: 30,
+  MAX: 12 * 60 * 60
+});
+
 /** Network bounds an explicit per-version window must sit inside (A-05). */
 export const ACCEPTANCE_WINDOW_BOUNDS_S = Object.freeze({
   MIN: 24 * 60 * 60,
@@ -340,10 +366,26 @@ export function acceptanceWindowSecondsOf(contract = {}) {
 }
 
 /** The service terms a Call freezes alongside the contract digest. */
+/**
+ * Seconds the work may take. An explicit declaration outranks the tier default
+ * — the tier is shorthand, not the authority — and the default is resolved on
+ * read and never written onto a stored record, because writing it would move
+ * the version's content digest and every Call already bound to that version
+ * would start reporting digest_mismatch.
+ */
+export function executionBudgetSecondsOf(contract = {}) {
+  const declared = contract?.execution_budget_s;
+  if (Number.isInteger(declared) && declared > 0) {
+    return declared;
+  }
+  return SERVICE_TIER_EXECUTION_BUDGET_S[serviceTierOf(contract)];
+}
+
 export function serviceTermsOf(contract = {}) {
   return {
     service_tier: serviceTierOf(contract),
     acceptance_window_s: acceptanceWindowSecondsOf(contract),
+    execution_budget_s: executionBudgetSecondsOf(contract),
     privacy_mode: privacyModeOf(contract),
     fulfillment_mode: fulfillmentModeOf(contract)
   };
@@ -369,6 +411,23 @@ function validateServiceTerms(contract) {
     ) {
       errors.push(
         `acceptance_window_s must be between ${ACCEPTANCE_WINDOW_BOUNDS_S.MIN} and ${ACCEPTANCE_WINDOW_BOUNDS_S.MAX} seconds`
+      );
+    }
+  }
+
+  // Refused rather than clamped, the same rule the acceptance window follows:
+  // a budget quietly moved is a promise quietly changed, and a publisher who
+  // asked for something the network will not give should be told so rather
+  // than discovering the real number when work is killed mid-execution.
+  if (contract.execution_budget_s !== undefined && contract.execution_budget_s !== null) {
+    if (!Number.isInteger(contract.execution_budget_s) || contract.execution_budget_s <= 0) {
+      errors.push('execution_budget_s must be a positive integer number of seconds');
+    } else if (
+      contract.execution_budget_s < EXECUTION_BUDGET_BOUNDS_S.MIN ||
+      contract.execution_budget_s > EXECUTION_BUDGET_BOUNDS_S.MAX
+    ) {
+      errors.push(
+        `execution_budget_s must be between ${EXECUTION_BUDGET_BOUNDS_S.MIN} and ${EXECUTION_BUDGET_BOUNDS_S.MAX} seconds`
       );
     }
   }

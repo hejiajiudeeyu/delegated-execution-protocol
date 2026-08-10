@@ -162,6 +162,34 @@ M3 单元 1。在此之前 `schema_valid` 是执行方写在自己结果对象�
   任何责任方只要闭口不答就能永久跳过这项检查）。
 - `output_schema` 本身编译不过时，错误指向**契约**而不是这次交付——指错了人，去修的就会是错的那一方。
 
+
+## 6.3) 执行预算（FR-025）
+
+M3 单元 6。此前一次调用上跑着**三个互不知情的时钟**：caller 自己的 `hard_timeout_s`、
+平台的 `token_ttl_seconds`（同时兼任资金 hold 的过期），以及 responder 的每热线 hard 超时。
+三个默认值都在五分钟量级，而一次真实 MinerU 解析（含冷启动模型加载）约四分钟——
+2026-08-09 第一次真实生产调用就死在最先响的那个上，而且**只调高其中一个只会换一个错误码**。
+
+现在由热线自己声明工作需要多久，其余各方从它派生。
+
+| 参数 | 建议值 | 状态 | 说明 |
+|---|---:|---|---|
+| `execution_budget_s`(quick) | `300` | PROVISIONAL | 交互式的活 |
+| `execution_budget_s`(standard) | `1800` | PROVISIONAL | |
+| `execution_budget_s`(deep) | `14400` | PROVISIONAL | 深度的活是「你会走开」的那种 |
+| `execution_budget_min_s` | `30` | PROVISIONAL | 显式声明的下界 |
+| `execution_budget_max_s` | `43200` | PROVISIONAL | 显式声明的上界 |
+
+约束：
+
+- 显式 `execution_budget_s` 优先于档位默认值；越界**拒绝发布，不做静默夹取**——
+  与验收窗同一条规矩：被悄悄改过的预算就是被悄悄改过的承诺，发布者应当当场知道，
+  而不是等到工作在执行途中被杀掉才发现真实数字。
+- **进冻结契约字段表**（`HOTLINE_VERSION_CONTRACT_FIELDS`），因此随 Call 快照，
+  在途调用不受热线改档影响。
+- **默认值只在读取时解析，绝不写进既有版本记录**：写入会改变内容摘要，
+  已绑定该版本的 Call 随即报 `digest_mismatch`。与 `service_tier` 完全同一个陷阱与同一条红线，有测试钉住。
+
 ## 7) 核心参数确认结果
 
 以下8项已确认并冻结（可直接进入实现）：

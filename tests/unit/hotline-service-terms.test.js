@@ -19,6 +19,7 @@ import {
   SERVICE_TIER,
   SERVICE_TIER_ACCEPTANCE_WINDOW_S,
   acceptanceWindowSecondsOf,
+  executionBudgetSecondsOf,
   canonicalizeHotlineVersion,
   fulfillmentModeOf,
   hotlineVersionDigest,
@@ -152,13 +153,23 @@ describe("the terms a Call freezes", () => {
     expect(serviceTermsOf(contract({ service_tier: SERVICE_TIER.DEEP, fulfillment_mode: "confirm" }))).toEqual({
       service_tier: "deep",
       acceptance_window_s: 7 * 24 * HOUR,
+      // FR-025: how long the work itself may take. Deep work is the kind you
+      // go away from, so its budget is hours rather than the five minutes a
+      // request/response API would assume.
+      execution_budget_s: 4 * HOUR,
       privacy_mode: "supervised",
       fulfillment_mode: "confirm"
     });
   });
 
   it("is part of the frozen contract, not metadata beside it", () => {
-    for (const field of ["service_tier", "acceptance_window_s", "privacy_mode", "fulfillment_mode"]) {
+    for (const field of [
+      "service_tier",
+      "acceptance_window_s",
+      "execution_budget_s",
+      "privacy_mode",
+      "fulfillment_mode"
+    ]) {
       expect(HOTLINE_VERSION_CONTRACT_FIELDS).toContain(field);
     }
     const before = hotlineVersionDigest(contract());
@@ -194,5 +205,46 @@ describe("validateHotlineServiceTerms on its own", () => {
     });
     expect(result.valid).toBe(false);
     expect(result.errors).toHaveLength(4);
+  });
+
+  // FR-025. Three clocks used to run a call and none knew about the others:
+  // the caller's hard timeout, the platform's token TTL (which doubles as the
+  // billing hold's expiry) and the responder's per-hotline limit. All defaulted
+  // near five minutes while a real MinerU parse takes about four, so the first
+  // real production call died on whichever fired first — and raising one only
+  // changed which error came back. A hotline now declares how long its work
+  // needs and everyone derives from that.
+  describe("execution budget", () => {
+    it("defaults by tier, sized for what the tier is for", () => {
+      expect(executionBudgetSecondsOf(contract({ service_tier: SERVICE_TIER.QUICK }))).toBe(5 * 60);
+      expect(executionBudgetSecondsOf(contract({ service_tier: SERVICE_TIER.STANDARD }))).toBe(30 * 60);
+      expect(executionBudgetSecondsOf(contract({ service_tier: SERVICE_TIER.DEEP }))).toBe(4 * HOUR);
+    });
+
+    it("lets an explicit declaration outrank the tier", () => {
+      expect(executionBudgetSecondsOf(contract({ service_tier: SERVICE_TIER.QUICK, execution_budget_s: 900 }))).toBe(900);
+    });
+
+    // Same rule as the acceptance window: a budget quietly moved is a promise
+    // quietly changed, and the publisher should learn it now rather than when
+    // work is killed mid-execution.
+    it("refuses an out-of-bounds budget rather than clamping it", () => {
+      const tooLong = validateHotlineContract(contract({ execution_budget_s: 13 * HOUR }));
+      expect(tooLong.valid).toBe(false);
+      expect(tooLong.errors.join(" ")).toContain("execution_budget_s");
+
+      const tooShort = validateHotlineContract(contract({ execution_budget_s: 5 }));
+      expect(tooShort.valid).toBe(false);
+    });
+
+    // The trap this field had to avoid: writing a resolved default onto a
+    // stored version would move its digest and every Call bound to it would
+    // start reporting digest_mismatch.
+    it("does not change the digest when the default is merely resolved", () => {
+      const stored = contract({ service_tier: SERVICE_TIER.STANDARD });
+      const before = hotlineVersionDigest(stored);
+      executionBudgetSecondsOf(stored);
+      expect(hotlineVersionDigest(stored)).toBe(before);
+    });
   });
 });

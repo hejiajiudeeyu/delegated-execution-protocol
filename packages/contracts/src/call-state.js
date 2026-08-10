@@ -407,6 +407,11 @@ export const HOTLINE_VERSION_CONTRACT_FIELDS = Object.freeze([
   // (`serviceTierOf`, `privacyModeOf`, `fulfillmentModeOf`), never persisted.
   'service_tier',
   'acceptance_window_s',
+  // Digest-safe on the same terms as the fields above it: the default is
+  // resolved on read and never written onto a stored version record. Writing
+  // one would move the content digest and every Call already bound to that
+  // version would start reporting digest_mismatch.
+  'execution_budget_s',
   'privacy_mode',
   'fulfillment_mode'
 ]);
