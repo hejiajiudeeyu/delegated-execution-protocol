@@ -402,3 +402,49 @@ describe("observational request events", () => {
     expect(result.errors).toContain("progress.output_preview is not an allowed field");
   });
 });
+
+// FR-025. `queued` and `executing` have been distinct since M1 and the whole
+// test tree never mentioned either — a state defined but never asserted is a
+// state nobody has checked the shape of. M3 unit 6 is the platform's first use
+// of them, so the table it is about to rely on gets pinned first.
+describe("queued execution (FR-025)", () => {
+  it("lets an accepted call wait before it runs", () => {
+    expect(canTransition(CALL_STATE_AXIS.EXECUTION, EXECUTION_STATUS.ACCEPTED, EXECUTION_STATUS.QUEUED)).toBe(true);
+    expect(canTransition(CALL_STATE_AXIS.EXECUTION, EXECUTION_STATUS.QUEUED, EXECUTION_STATUS.EXECUTING)).toBe(true);
+  });
+
+  // The distinction the state exists to make: waiting is not working. A queued
+  // call that reports delivery has skipped the only step that could have
+  // produced something to deliver.
+  it("does not let a queued call deliver without executing", () => {
+    expect(canTransition(CALL_STATE_AXIS.EXECUTION, EXECUTION_STATUS.QUEUED, EXECUTION_STATUS.DELIVERED)).toBe(false);
+  });
+
+  it("lets a queued call be canceled, fail or time out without ever running", () => {
+    for (const target of [EXECUTION_STATUS.CANCELED, EXECUTION_STATUS.FAILED, EXECUTION_STATUS.TIMED_OUT]) {
+      expect(canTransition(CALL_STATE_AXIS.EXECUTION, EXECUTION_STATUS.QUEUED, target)).toBe(true);
+    }
+  });
+
+  it("treats re-reporting queued as idempotent rather than illegal", () => {
+    expect(canTransition(CALL_STATE_AXIS.EXECUTION, EXECUTION_STATUS.QUEUED, EXECUTION_STATUS.QUEUED)).toBe(true);
+  });
+
+  it("is not a terminal state — a queued call is still owed an outcome", () => {
+    expect(isExecutionTerminal(EXECUTION_STATUS.QUEUED)).toBe(false);
+    expect(isExecutionTerminal(EXECUTION_STATUS.EXECUTING)).toBe(false);
+  });
+
+  it("names both wire events, so a responder can report waiting and starting", () => {
+    expect(CALL_EVENT.QUEUED).toBe("call.queued");
+    expect(CALL_EVENT.EXECUTION_STARTED).toBe("call.execution_started");
+  });
+
+  // The reason a progress beat cannot stand in for the transition: observations
+  // are deliberately outside CALL_EVENT and must never feed the execution
+  // projection, so "stage: executing" in a PROGRESS event is not the responder
+  // saying it started.
+  it("keeps the progress beat out of the execution vocabulary", () => {
+    expect(Object.values(CALL_EVENT)).not.toContain(OBSERVATIONAL_REQUEST_EVENT.PROGRESS);
+  });
+});
