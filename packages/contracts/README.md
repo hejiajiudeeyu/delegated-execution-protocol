@@ -22,6 +22,7 @@ Stable protocol exports in this package:
 - `canonicalizeResultPackageForSignature(result)`
 - `DELIVERY_INTEGRITY_CODE`
 - `validateDeliveredOutput(contract, result)`
+- `executionBudgetSecondsOf(contract)`
 - `validatePricingHint(pricingHint)`
 - `validateTaskBillingClaims(billing, pricingHint)`
 - `validateBillingUsage(usage, pricingHint, billing)`
